@@ -14,8 +14,6 @@ public:
   float getWidth() const { return width; } 
   std::map<float, float> points;
 
-  void damage(glm::vec2 position, float radius);
-
 private:
   float width;
 };

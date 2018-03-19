@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "Grenade.hpp"
+#include "Event.hpp"
 
 class Terrain;
 

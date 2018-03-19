@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "Player.hpp"
+#include "EventManager.hpp"
 
 class Terrain;
 class ProjectileSystem;
@@ -19,6 +20,8 @@ public:
   void launchGrenade(Player&);
 
   const std::vector<Player>& getPlayers() const { return players; };
+
+  void onExplosion(Event);
 
 private:
   std::vector<Player> players;

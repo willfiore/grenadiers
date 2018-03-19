@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "Terrain.hpp"
+#include "EventManager.hpp"
 
 ProjectileSystem::ProjectileSystem(Terrain* t) :
   terrain(t)
@@ -38,7 +39,12 @@ void ProjectileSystem::update(float dt)
     }
 
     if (g.age > Grenade::LIFETIME) {
-      terrain->damage(g.position, Grenade::EXPLOSION_RADIUS);
+
+      Event e(Event::EXPLOSION);
+      e.position = g.position;
+      e.radius = Grenade::EXPLOSION_RADIUS;
+      EventManager::Send(e);
+
       grenades.erase(i);
       continue;
     }

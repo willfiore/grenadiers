@@ -8,7 +8,7 @@ struct Player {
   static constexpr float SIZE = 10.f;
   static constexpr float SPEED = 340.f;
   static constexpr float ACCEL_FACTOR = 1.0f;
-  static constexpr float ANGLE_ACCEL_FACTOR = 0.25f;
+  static constexpr float ANGLE_ACCEL_FACTOR = 15.f;
   static constexpr float FALL_ACCEL = 2000.f;
   static constexpr float JUMP_SPEED = 700.f;
   static constexpr float DOUBLE_JUMP_MULTIPLIER = 0.7f;
@@ -22,9 +22,11 @@ struct Player {
 
   float angle;
   float goalAngle;
+  float angularVelocity;
 
   float aimDirection;
 
   bool airborne;
+  bool outOfControl;
   bool doubleJumpAvailable;
 };

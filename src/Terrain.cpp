@@ -11,9 +11,9 @@
 
 Terrain::Terrain()
 {
-  width = 1500.f;
+  width = 6000.f;
   for (int i = 0; i <= width; i += Random::randomInt(80, 250)) {
-    points.insert(std::make_pair(i, Random::randomInt(60, 120)));
+    points.insert(std::make_pair(i, Random::randomInt(60, 170)));
   }
 
   width = points.crbegin()->first;
@@ -68,8 +68,4 @@ float Terrain::getAngle(float x) const {
   }
 
   return 0.f;
-}
-
-void Terrain::damage(glm::vec2 position, float radius)
-{
 }

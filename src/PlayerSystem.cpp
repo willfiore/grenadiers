@@ -14,6 +14,9 @@ PlayerSystem::PlayerSystem(const Terrain* t, ProjectileSystem* p) :
   projectileSystem(p)
 {
   players.emplace_back(Player());
+
+  EventManager::Register(Event::EXPLOSION,
+      std::bind(&PlayerSystem::onExplosion, this, _1));
 }
 
 void PlayerSystem::update(float dt, const float* axes)
@@ -27,7 +30,10 @@ void PlayerSystem::update(float dt, const float* axes)
     p.velocity.y -= dt * Player::FALL_ACCEL;
 
     // Axes movement
-    p.velocity.x = Player::SPEED * axes[0];
+    if (!p.outOfControl) {
+      p.velocity.x = Player::SPEED * axes[0];
+    }
+    
     p.position += p.velocity * dt;
 
     p.aimDirection = glm::atan(axes[1], axes[0]);
@@ -40,6 +46,7 @@ void PlayerSystem::update(float dt, const float* axes)
       p.position.y = terrainHeight;
 
       p.airborne = false;
+      p.outOfControl = false;
       p.doubleJumpAvailable = false;
     }
 
@@ -53,9 +60,17 @@ void PlayerSystem::update(float dt, const float* axes)
     float angleHeightModifier =
       (150.f - p.position.y + terrainHeight) / 150.f;
 
+    if (angleHeightModifier < 0) angleHeightModifier = 0;
+
     p.goalAngle = terrain->getAngle(p.position.x);
     p.goalAngle *= angleHeightModifier;
-    p.angle += (p.goalAngle - p.angle) * Player::ANGLE_ACCEL_FACTOR;
+
+    if (p.outOfControl) {
+      p.goalAngle += 0.2f * -glm::sign(p.velocity.x);
+    }
+
+    p.angularVelocity = (p.goalAngle - p.angle) * Player::ANGLE_ACCEL_FACTOR;
+    p.angle += p.angularVelocity * dt;
   }
 }
 
@@ -82,6 +97,7 @@ void PlayerSystem::processInput(int playerID, int button, bool action)
 
 void PlayerSystem::jump(Player& p)
 {
+  if (p.outOfControl) return;
   if (p.airborne && !p.doubleJumpAvailable) return;
   p.airborne = true;
 
@@ -90,6 +106,7 @@ void PlayerSystem::jump(Player& p)
     p.velocity.y = Player::JUMP_SPEED;
   } else {
     p.doubleJumpAvailable = false;
+    p.outOfControl = false;
     p.velocity.y = Player::JUMP_SPEED * Player::DOUBLE_JUMP_MULTIPLIER;
   }
 }
@@ -105,4 +122,32 @@ void PlayerSystem::launchGrenade(Player& p)
 
   projectileSystem->spawnGrenade(
       p.position + glm::vec2(0.f, Player::SIZE), velocity);
+}
+
+void PlayerSystem::onExplosion(Event e)
+{
+  for (auto& p : players) {
+    glm::vec2 diff = p.position - e.position;
+    float dist = glm::length(diff);
+
+    if (dist < e.radius) {
+      p.airborne = true;
+      p.outOfControl = true;
+
+      glm::vec2 launchVelocity;
+
+      launchVelocity.x = 1000.f * glm::pow( (e.radius-dist)/e.radius, 0.5);
+      launchVelocity.x *= glm::sign(diff.x);
+
+      launchVelocity.y = 1000.f * glm::pow( (e.radius-dist)/e.radius, 0.5);
+
+      // If we are very close in x, launch more upwards
+      if (glm::abs(diff.x) < 1.5f * Player::SIZE) {
+	launchVelocity.x *= 0.2f;
+	launchVelocity.y *= 1.5f;
+      }
+
+      p.velocity += launchVelocity;
+    }
+  }
 }

@@ -10,6 +10,7 @@
 #include "Terrain.hpp"
 #include "Player.hpp"
 
+#include "CameraSystem.hpp"
 #include "PlayerSystem.hpp"
 #include "ProjectileSystem.hpp"
 
@@ -33,15 +34,15 @@ int main() {
   glfwWindowHint(GLFW_SAMPLES, 16);
   glfwSwapInterval(1);
 
-  int windowWidth = 720;
-  int windowHeight = 480;
+  int windowWidth = 1366;
+  int windowHeight = 768;
 
   // Init window
   GLFWwindow* window =
     glfwCreateWindow(
 	windowWidth, windowHeight,
 	"Platformer",
-	NULL,
+	glfwGetPrimaryMonitor(),
 	NULL
 	);
 
@@ -95,14 +96,12 @@ int main() {
       "base"
       );
 
-  Camera camera;
   Terrain terrain;
 
   ProjectileSystem projectileSystem(&terrain);
   PlayerSystem playerSystem(&terrain, &projectileSystem);
-
-  const std::vector<Player>& players = playerSystem.getPlayers();
-  const Player& player1 = players.front();
+  CameraSystem cameraSystem(&playerSystem);
+  cameraSystem.setWindowDimensions(windowWidth, windowHeight);
 
   PlayerRenderer playerRenderer(&playerSystem);
   TerrainRenderer terrainRenderer(&terrain);
@@ -157,9 +156,7 @@ int main() {
       projectileSystem.update(dt);
 
       // Camera movement
-      camera.position.x +=
-	(-player1.position.x - camera.position.x) * Camera::ACCEL;
-      camera.position.y = -windowHeight/2;
+      cameraSystem.update(dt);
     }
 
     /////////
@@ -170,11 +167,7 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Camera
-    glm::mat4 view = glm::translate(glm::mat4(),
-	glm::vec3(windowWidth/2, windowHeight/2, 0.f));
-
-    view = glm::translate(view,
-	glm::vec3(camera.position.x, camera.position.y, 0));
+    glm::mat4 view = cameraSystem.getView();
 
     glBindBuffer(GL_UNIFORM_BUFFER, UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
@@ -183,6 +176,9 @@ int main() {
     terrainRenderer.draw();
     playerRenderer.draw();
     projectileRenderer.draw();
+
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
+	glm::value_ptr(glm::mat4()));
 
     glfwSwapBuffers(window);
     glfwPollEvents();
