@@ -3,6 +3,8 @@
 #include <glm/matrix.hpp>
 #include <glm/vec2.hpp>
 
+#include "Event.hpp"
+
 class PlayerSystem;
 
 class CameraSystem
@@ -20,6 +22,10 @@ private:
 
   int windowWidth;
   int windowHeight;
+
+  float shake = 1.f;
   
   const PlayerSystem* playerSystem;
+
+  void onExplosion(Event);
 };

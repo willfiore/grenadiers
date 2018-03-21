@@ -1,11 +1,13 @@
 #include "PlayerSystem.hpp"
 
-#include <glm/trigonometric.hpp>
+#include <glm/glm.hpp>
 
 #include "Player.hpp"
 #include "Terrain.hpp"
 #include "Joystick.hpp"
 #include "ProjectileSystem.hpp"
+
+#include <glm/common.hpp>
 
 #include <iostream>
 
@@ -32,8 +34,10 @@ void PlayerSystem::update(float dt, const float* axes)
     // Axes movement
     if (!p.outOfControl) {
       p.velocity.x = Player::SPEED * axes[0];
+
+      if (!p.airborne)
+	p.velocity.x *= glm::cos(terrain->getAngle(p.position.x));
     }
-    
     p.position += p.velocity * dt;
 
     p.aimDirection = glm::atan(axes[1], axes[0]);
@@ -41,7 +45,7 @@ void PlayerSystem::update(float dt, const float* axes)
     // Lock to terrain if not airborne
     float terrainHeight = terrain->getHeight(p.position.x);
 
-    if (p.position.y <= terrainHeight || !p.airborne) {
+    if (p.position.y < terrainHeight || !p.airborne) {
       p.velocity.y = 0;
       p.position.y = terrainHeight;
 
@@ -49,11 +53,10 @@ void PlayerSystem::update(float dt, const float* axes)
       p.outOfControl = false;
       p.doubleJumpAvailable = false;
     }
-
-    if (p.position.x - Player::SIZE < 0)
-      p.position.x = Player::SIZE;
-    if (p.position.x + Player::SIZE > terrain->getWidth())
-      p.position.x = terrain->getWidth() - Player::SIZE;
+    
+    if (p.position.x < Player::SIZE) p.position.x = Player::SIZE;
+    if (p.position.x > terrain->getMaxWidth() - Player::SIZE)
+      p.position.x = terrain->getMaxWidth() - Player::SIZE;
 
     // Rotation
     ////////////////////////////////////////////////////
@@ -63,6 +66,7 @@ void PlayerSystem::update(float dt, const float* axes)
     if (angleHeightModifier < 0) angleHeightModifier = 0;
 
     p.goalAngle = terrain->getAngle(p.position.x);
+
     p.goalAngle *= angleHeightModifier;
 
     if (p.outOfControl) {
@@ -126,20 +130,23 @@ void PlayerSystem::launchGrenade(Player& p)
 
 void PlayerSystem::onExplosion(Event e)
 {
+  glm::vec2 position = boost::get<glm::vec2>(e.data[0]);
+  float radius = boost::get<float>(e.data[1]);
+
   for (auto& p : players) {
-    glm::vec2 diff = p.position - e.position;
+    glm::vec2 diff = p.position - position;
     float dist = glm::length(diff);
 
-    if (dist < e.radius) {
+    if (dist < radius) {
       p.airborne = true;
       p.outOfControl = true;
 
       glm::vec2 launchVelocity;
 
-      launchVelocity.x = 1000.f * glm::pow( (e.radius-dist)/e.radius, 0.5);
+      launchVelocity.x = 1000.f * glm::pow( (radius-dist)/radius, 0.5);
       launchVelocity.x *= glm::sign(diff.x);
 
-      launchVelocity.y = 1000.f * glm::pow( (e.radius-dist)/e.radius, 0.5);
+      launchVelocity.y = 1000.f * glm::pow( (radius-dist)/radius, 0.5);
 
       // If we are very close in x, launch more upwards
       if (glm::abs(diff.x) < 1.5f * Player::SIZE) {

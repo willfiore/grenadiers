@@ -2,70 +2,81 @@
 #include "Random.hpp"
 
 #include <vector>
+#include <map>
 #include <iostream>
 
-#include <glad/glad.h>
-#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/trigonometric.hpp>
+#include "geo.hpp"
 
+#include "EventManager.hpp"
 #include "ResourceManager.hpp"
 
-Terrain::Terrain()
+Terrain::Terrain() :
+  maxHeight(170.f),
+  maxWidth(4000.f)
 {
-  width = 6000.f;
-  for (int i = 0; i <= width; i += Random::randomInt(80, 250)) {
-    points.insert(std::make_pair(i, Random::randomInt(60, 170)));
+  for (float i = 0.f; i < maxWidth; i += 50.f) {
+    points.push_back({i, maxHeight});
   }
+  maxWidth = points.back().x;
 
-  width = points.crbegin()->first;
-  points.rbegin()->second = points.begin()->second;
+  EventManager::Register(Event::EXPLOSION,
+      std::bind(&Terrain::onExplosion, this, _1));
 }
 
 float Terrain::getHeight(float x) const
 {
-  for (auto i = points.begin(); i != points.end(); ++i) {
-    if (x < i->first) {
+  for (size_t i = 0; i < points.size(); ++i) {
+    glm::vec2 p1 = points[i];
 
-      // Before first terrain point
-      if (i == points.begin()) {
-	return 0.f;
-      }
+    if (x < p1.x) {
 
-      float x1 = std::prev(i)->first;
-      float x2 = i->first;
+      // Before first point
+      if (i == 0) return p1.y;
+      glm::vec2 p2 = points[i-1];
 
-      float y1 = std::prev(i)->second;
-      float y2 = i->second;
-
-      // Linear interp between two points
-      float a = (x - x1) / (x2 - x1);
-      float y = y1 + (y2-y1)*a;
+      float a = (x - p1.x) / (p2.x - p1.x);
+      float y = p1.y + (p2.y - p1.y) * a;
 
       return y;
     }
   }
 
-  // Beyond last terrain point
   return 0.f;
 }
 
-float Terrain::getAngle(float x) const {
-  for (auto i = points.begin(); i != points.end(); ++i) {
-    if (x < i->first) {
-      if (i == points.begin()) {
-	return 0.f;
-      }
+float Terrain::getAngle(float x) const
+{
+  for (size_t i = 0; i < points.size(); ++i) {
+    glm::vec2 p1 = points[i];
 
-      float x1 = std::prev(i)->first;
-      float x2 = i->first;
+    if (x < p1.x) {
+      if (i == 0) return 0.f;
+      glm::vec2 p2 = points[i-1];
 
-      float y1 = std::prev(i)->second;
-      float y2 = i->second;
-
-      float a = glm::atan( (y2 - y1) / (x2 - x1) );
-
-      return a;
+      return glm::atan((p2.y - p1.y) / (p2.x - p1.x));
     }
   }
 
   return 0.f;
+}
+
+void Terrain::onExplosion(Event e)
+{
+  glm::vec2 position = boost::get<glm::vec2>(e.data[0]);
+  float radius = boost::get<float>(e.data[1]);
+
+  for (size_t i = 0; i < points.size(); ++i) {
+    glm::vec2& p = points[i];
+    
+    float distance = glm::distance(position, p);
+    if (distance < radius) {
+      p.y -= 0.2f * radius *
+	glm::cos( (distance / radius) * glm::half_pi<float>()) *
+	(p.y / maxHeight);
+
+      if (p.y < 0.f) p.y = 0.f;
+    }
+  }
 }

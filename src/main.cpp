@@ -34,15 +34,15 @@ int main() {
   glfwWindowHint(GLFW_SAMPLES, 16);
   glfwSwapInterval(1);
 
-  int windowWidth = 1366;
-  int windowHeight = 768;
+  int windowWidth = 720;
+  int windowHeight = 480;
 
   // Init window
   GLFWwindow* window =
     glfwCreateWindow(
 	windowWidth, windowHeight,
 	"Platformer",
-	glfwGetPrimaryMonitor(),
+	NULL,
 	NULL
 	);
 

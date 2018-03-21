@@ -41,8 +41,8 @@ void ProjectileSystem::update(float dt)
     if (g.age > Grenade::LIFETIME) {
 
       Event e(Event::EXPLOSION);
-      e.position = g.position;
-      e.radius = Grenade::EXPLOSION_RADIUS;
+      e.data.push_back(g.position);
+      e.data.push_back(Grenade::EXPLOSION_RADIUS);
       EventManager::Send(e);
 
       grenades.erase(i);

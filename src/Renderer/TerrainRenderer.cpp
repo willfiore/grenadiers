@@ -3,9 +3,12 @@
 #include <vector>
 #include <glm/vec2.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/constants.hpp>
 
 #include "../Terrain.hpp"
 #include "../ResourceManager.hpp"
+
+#include <iostream>
 
 TerrainRenderer::TerrainRenderer(const Terrain *t) :
   terrain(t)
@@ -27,31 +30,32 @@ TerrainRenderer::TerrainRenderer(const Terrain *t) :
 
 void TerrainRenderer::draw() const
 {
+  const std::vector<glm::vec2>& points = terrain->getPoints();
+  std::vector<glm::vec2> verts;
 
-  const std::map<float, float>& points = terrain->points;
-  verts.clear();
+  for (size_t i = 0; i < points.size(); ++i) {
+    const glm::vec2& p1 = points[i];
 
-  for (auto i = points.begin(); i != points.end(); ++i) {
-    const auto& p1 = *i;
-    
-    if (i != std::prev(points.end())) {
-      const auto& p2 = *(std::next(i));
-      verts.push_back({p1.first, p1.second});
-      verts.push_back({p1.first, 0.f});
-      verts.push_back({p2.first, p2.second});
+    if (i != points.size() - 1) {
+      const glm::vec2& p2 = points[i+1];
+
+      verts.push_back({p1.x, p1.y});
+      verts.push_back({p1.x, 0.f});
+      verts.push_back({p2.x, p2.y});
     }
 
-    if (i != points.begin()) {
-      const auto& p2 = *(std::prev(i));
-      verts.push_back({p1.first, p1.second});
-      verts.push_back({p2.first, 0.f});
-      verts.push_back({p1.first, 0.f});
+    if (i != 0) {
+      const glm::vec2& p2 = points[i-1];
+
+      verts.push_back({p1.x, p1.y});
+      verts.push_back({p2.x, 0.f});
+      verts.push_back({p1.x, 0.f});
     }
   }
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(glm::vec2),
-      &verts[0], GL_STATIC_DRAW);
+      &verts[0], GL_STREAM_DRAW);
 
   shader.setMat4("model", glm::mat4());
 

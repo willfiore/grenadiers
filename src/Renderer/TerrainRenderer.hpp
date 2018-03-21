@@ -14,5 +14,5 @@ private:
   const Terrain* terrain;
 
   GLuint VBO;
-  mutable std::vector<glm::vec2> verts;
+  std::vector<glm::vec2> verts;
 };
