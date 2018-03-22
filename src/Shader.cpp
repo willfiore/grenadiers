@@ -51,6 +51,9 @@ void Shader::compile(const char* vertexCode, const char* fragmentCode)
   // so are no longer needed.
   glDeleteShader(vertex);
   glDeleteShader(fragment);
+  
+  // The Shader is only a wrapper around the program's
+  // numeric ID now.
 }
 
 void Shader::use() const

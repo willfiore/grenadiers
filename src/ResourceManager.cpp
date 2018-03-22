@@ -44,6 +44,10 @@ Shader ResourceManager::LoadShader(const GLchar* vertexPath,
   Shader shader;
   shader.compile(vertexCode_cstr, fragmentCode_cstr);
 
+  // Set UBO bindings
+  unsigned int uboIndex = glGetUniformBlockIndex(shader.ID, "Matrices");
+  glUniformBlockBinding(shader.ID, uboIndex, 0);
+
   shaders[name] = shader;
   return shaders[name];
 }

@@ -1,13 +1,13 @@
-#include "ProjectileRenderer.hpp"
+#include "PowerupRenderer.hpp"
 
 #include <vector>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "../ResourceManager.hpp"
-#include "../ProjectileSystem.hpp"
+#include "../PowerupSystem.hpp"
 
-ProjectileRenderer::ProjectileRenderer(const ProjectileSystem* p) :
-  projectileSystem(p)
+PowerupRenderer::PowerupRenderer(const PowerupSystem* p) :
+  powerupSystem(p)
 {
   std::vector<glm::vec3> verts;
 
@@ -36,15 +36,15 @@ ProjectileRenderer::ProjectileRenderer(const ProjectileSystem* p) :
   shader = ResourceManager::GetShader("base");
 }
 
-void ProjectileRenderer::draw() const
+void PowerupRenderer::draw() const
 {
   glBindVertexArray(VAO);
   shader.use();
 
-  for (auto g : projectileSystem->getGrenades()) {
+  for (auto p : powerupSystem->getPowerups()) {
     glm::mat4 model = glm::mat4();
-    model = glm::translate(model, glm::vec3(g.position, 1.0));
-    model = glm::scale(model, glm::vec3(Grenade::SIZE, Grenade::SIZE, 1.f));
+    model = glm::translate(model, glm::vec3(p.position, 1.0));
+    model = glm::scale(model, glm::vec3(6.f, 6.f, 1.f));
 
     shader.setMat4("model", model);
 

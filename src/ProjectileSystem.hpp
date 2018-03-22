@@ -9,7 +9,7 @@ class Terrain;
 
 class ProjectileSystem {
 public:
-  ProjectileSystem(Terrain*);
+  ProjectileSystem(const Terrain*);
 
   void update(float dt);
   const std::vector<Grenade>& getGrenades() const { return grenades; }
@@ -18,5 +18,5 @@ public:
 
 private:
   std::vector<Grenade> grenades;
-  Terrain* terrain;
+  const Terrain* terrain;
 };

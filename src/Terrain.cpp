@@ -13,11 +13,11 @@
 #include "ResourceManager.hpp"
 
 Terrain::Terrain() :
-  maxHeight(170.f),
-  maxWidth(4000.f)
+  maxDepth(-200.f),
+  maxWidth(9000.f)
 {
-  for (float i = 0.f; i < maxWidth; i += 50.f) {
-    points.push_back({i, maxHeight});
+  for (float i = 0.f; i < maxWidth; i += 45.f) {
+    points.push_back({i, 0.f});
   }
   maxWidth = points.back().x;
 
@@ -33,7 +33,7 @@ float Terrain::getHeight(float x) const
     if (x < p1.x) {
 
       // Before first point
-      if (i == 0) return p1.y;
+      if (i == 0) return 0.f;
       glm::vec2 p2 = points[i-1];
 
       float a = (x - p1.x) / (p2.x - p1.x);
@@ -62,6 +62,9 @@ float Terrain::getAngle(float x) const
   return 0.f;
 }
 
+void Terrain::update(float t, float dt) {
+}
+
 void Terrain::onExplosion(Event e)
 {
   glm::vec2 position = boost::get<glm::vec2>(e.data[0]);
@@ -72,11 +75,11 @@ void Terrain::onExplosion(Event e)
     
     float distance = glm::distance(position, p);
     if (distance < radius) {
-      p.y -= 0.2f * radius *
+      p.y -= 0.3f * radius *
 	glm::cos( (distance / radius) * glm::half_pi<float>()) *
-	(p.y / maxHeight);
+	(1 - (p.y / maxDepth));
 
-      if (p.y < 0.f) p.y = 0.f;
+      if (p.y < maxDepth) p.y = maxDepth;
     }
   }
 }

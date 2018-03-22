@@ -1,7 +1,7 @@
 #include "PlayerRenderer.hpp"
 
 #include <vector>
-#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "../ResourceManager.hpp"
@@ -10,26 +10,26 @@
 PlayerRenderer::PlayerRenderer(const PlayerSystem* p) :
   playerSystem(p)
 {
-  std::vector<glm::vec2> verts;
+  std::vector<glm::vec3> verts;
 
-  verts.push_back({-1.f, +0.f});
-  verts.push_back({+1.f, +2.f});
-  verts.push_back({-1.f, +2.f});
+  verts.push_back({-1.f, +0.f, 0.f});
+  verts.push_back({+1.f, +2.f, 0.f});
+  verts.push_back({-1.f, +2.f, 0.f});
 
-  verts.push_back({-1.f, +0.f});
-  verts.push_back({+1.f, +0.f});
-  verts.push_back({+1.f, +2.f});
+  verts.push_back({-1.f, +0.f, 0.f});
+  verts.push_back({+1.f, +0.f, 0.f});
+  verts.push_back({+1.f, +2.f, 0.f});
 
   GLuint VBO;
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(glm::vec2),
+  glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(glm::vec3),
       &verts[0], GL_STATIC_DRAW);
 
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
 
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(GL_FLOAT), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GL_FLOAT), (void*)0);
   glEnableVertexAttribArray(0);
 
   glBindVertexArray(0);

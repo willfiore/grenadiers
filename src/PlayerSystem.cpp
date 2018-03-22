@@ -15,7 +15,9 @@ PlayerSystem::PlayerSystem(const Terrain* t, ProjectileSystem* p) :
   terrain(t),
   projectileSystem(p)
 {
-  players.emplace_back(Player());
+  Player player;
+  player.position.x = 1000.f;
+  players.push_back(player);
 
   EventManager::Register(Event::EXPLOSION,
       std::bind(&PlayerSystem::onExplosion, this, _1));

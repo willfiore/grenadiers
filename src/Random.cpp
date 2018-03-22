@@ -4,8 +4,8 @@
 std::mt19937 Random::generator = std::mt19937(std::random_device()());
 
 double Random::randomDouble(double a, double b) {
-    std::uniform_real_distribution<double> distribution(a, b);
-    return distribution(generator);
+  std::uniform_real_distribution<double> distribution(a, b);
+  return distribution(generator);
 }
 
 float Random::randomFloat(float a, float b) {

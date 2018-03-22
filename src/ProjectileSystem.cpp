@@ -9,7 +9,7 @@
 #include "Terrain.hpp"
 #include "EventManager.hpp"
 
-ProjectileSystem::ProjectileSystem(Terrain* t) :
+ProjectileSystem::ProjectileSystem(const Terrain* t) :
   terrain(t)
 {
 }
@@ -36,15 +36,14 @@ void ProjectileSystem::update(float dt)
       float rotateAngle = 2 * (terrainAngle - grenadeAngle);
 
       g.velocity = 0.5f * glm::rotate(g.velocity, rotateAngle);
+
     }
 
     if (g.age > Grenade::LIFETIME) {
-
       Event e(Event::EXPLOSION);
       e.data.push_back(g.position);
       e.data.push_back(Grenade::EXPLOSION_RADIUS);
       EventManager::Send(e);
-
       grenades.erase(i);
       continue;
     }

@@ -15,7 +15,7 @@ void CameraSystem::update(float dt)
 {
   const Player& p = playerSystem->getPlayers().front();
   position.x = position.x + (p.position.x - position.x) * dt * 4.f;
-  position.y = 0;
+  position.y = 100.f;
 
   shake = shake * 0.87f;
   if (shake < 0.f) shake = 0.f;
@@ -36,17 +36,15 @@ void CameraSystem::setWindowDimensions(int w, int h)
 glm::mat4 CameraSystem::getView() const
 {
   glm::mat4 view;
-  view = glm::translate(view, glm::vec3(windowWidth/2, 0, 0));
-  view = glm::translate(view,
-      glm::vec3(-position.x, position.y, 0.f));
+  view = glm::lookAt(
+      glm::vec3(position.x, position.y, 400.f),
+      glm::vec3(position.x, position.y, 0.f),
+      glm::vec3(0.f, 1.f, 0.f));
 
   return view;
 }
 
 void CameraSystem::onExplosion(Event e)
 {
-  glm::vec2 explosionPosition = boost::get<glm::vec2>(e.data[0]);
-  float distance = glm::distance(explosionPosition, position);
-  shake = 25.f - (pow(distance/50.f, 2));
-  if (shake < 2.f) shake = 2.f;
+  shake = 18.f;
 }

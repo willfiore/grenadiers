@@ -11,7 +11,7 @@ public:
 
   static constexpr float PRECISION = 50.f;
 
-  float getMaxHeight() const { return maxHeight; }
+  float getMaxDepth() const { return maxDepth; }
   float getMaxWidth() const { return maxWidth; }
 
   float getHeight(float x) const;
@@ -19,10 +19,12 @@ public:
 
   const std::vector<glm::vec2>& getPoints() const { return points; }
 
+  void update(float t, float dt);
+
 private:
   void onExplosion(Event e);
 
-  float maxHeight;
+  float maxDepth;
   float maxWidth;
 
   std::vector<glm::vec2> points;

@@ -6,8 +6,8 @@ layout (std140) uniform Matrices
 };
 uniform mat4 model;
 
-layout (location = 0) in vec2 pos;
+layout (location = 0) in vec3 pos;
 
 void main() {
-  gl_Position = projection * view * model * vec4(pos.x, pos.y, 0.0, 1.0);
+  gl_Position = projection * view * model * vec4(pos, 1.0);
 }

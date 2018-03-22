@@ -13,10 +13,12 @@
 #include "CameraSystem.hpp"
 #include "PlayerSystem.hpp"
 #include "ProjectileSystem.hpp"
+#include "PowerupSystem.hpp"
 
 #include "Renderer/PlayerRenderer.hpp"
 #include "Renderer/ProjectileRenderer.hpp"
 #include "Renderer/TerrainRenderer.hpp"
+#include "Renderer/PowerupRenderer.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -32,17 +34,17 @@ int main() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 16);
-  glfwSwapInterval(1);
+  // glfwSwapInterval(1);
 
-  int windowWidth = 720;
-  int windowHeight = 480;
+  int windowWidth = 1366;
+  int windowHeight = 768;
 
   // Init window
   GLFWwindow* window =
     glfwCreateWindow(
 	windowWidth, windowHeight,
 	"Platformer",
-	NULL,
+	glfwGetPrimaryMonitor(),
 	NULL
 	);
 
@@ -57,7 +59,7 @@ int main() {
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     return -1;
 
-  glEnable(GL_CULL_FACE);
+  // glEnable(GL_CULL_FACE);
 
   // Blending
   glEnable (GL_BLEND);
@@ -73,6 +75,12 @@ int main() {
       0.f, (float)windowWidth,
       0.f, (float)windowHeight,
       -1.f, 1.f
+      );
+
+  projection = glm::perspective(
+      glm::radians(80.f),
+      (float)windowWidth / (float)windowHeight,
+      0.01f, 10000.f
       );
 
   // Initialize space in UBO
@@ -96,9 +104,15 @@ int main() {
       "base"
       );
 
+  ResourceManager::LoadShader(
+      "../assets/shaders/base.vert", "../assets/shaders/terrain.frag",
+      "terrain"
+      );
+  
   Terrain terrain;
 
   ProjectileSystem projectileSystem(&terrain);
+  PowerupSystem powerupSystem(&terrain);
   PlayerSystem playerSystem(&terrain, &projectileSystem);
   CameraSystem cameraSystem(&playerSystem);
   cameraSystem.setWindowDimensions(windowWidth, windowHeight);
@@ -106,6 +120,7 @@ int main() {
   PlayerRenderer playerRenderer(&playerSystem);
   TerrainRenderer terrainRenderer(&terrain);
   ProjectileRenderer projectileRenderer(&projectileSystem);
+  PowerupRenderer powerupRenderer(&powerupSystem);
 
   std::set<int> buttonsDown;
 
@@ -154,6 +169,8 @@ int main() {
       const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
       playerSystem.update(dt, axes);
       projectileSystem.update(dt);
+      powerupSystem.update(dt);
+      terrain.update(currentTime, dt);
 
       // Camera movement
       cameraSystem.update(dt);
@@ -176,6 +193,7 @@ int main() {
     terrainRenderer.draw();
     playerRenderer.draw();
     projectileRenderer.draw();
+    powerupRenderer.draw();
 
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
 	glm::value_ptr(glm::mat4()));
