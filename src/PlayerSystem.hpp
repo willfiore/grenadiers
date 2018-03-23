@@ -27,4 +27,6 @@ private:
   std::vector<Player> players;
   const Terrain* terrain;
   ProjectileSystem* projectileSystem;
+
+  const float* axes;
 };

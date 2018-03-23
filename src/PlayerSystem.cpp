@@ -7,7 +7,7 @@
 #include "Joystick.hpp"
 #include "ProjectileSystem.hpp"
 
-#include <glm/common.hpp>
+#include <glm/gtc/constants.hpp>
 
 #include <iostream>
 
@@ -23,60 +23,88 @@ PlayerSystem::PlayerSystem(const Terrain* t, ProjectileSystem* p) :
       std::bind(&PlayerSystem::onExplosion, this, _1));
 }
 
-void PlayerSystem::update(float dt, const float* axes)
+void PlayerSystem::update(float dt, const float* _a)
 {
+  axes = _a;
+
   for (auto& p : players) {
+
+    float terrainHeight = terrain->getHeight(p.position.x);
+    float terrainAngle = terrain->getAngle(p.position.x);
 
     // Movement
     ////////////////////////////////////////////////////
 
-    // Gravity
-    p.velocity.y -= dt * Player::FALL_ACCEL;
+    // Acceleration
+    float accel_factor = Player::ACCEL_X;
+    if (p.airborne)
+      accel_factor = Player::ACCEL_X_AIRBORNE;
+    if (p.airborne && p.outOfControl)
+      accel_factor = Player::ACCEL_X_NOCONTROL;
 
-    // Axes movement
+    p.acceleration.x = 0.f;
+    // ---- Acceleration due to player input
     if (!p.outOfControl) {
-      p.velocity.x = Player::SPEED * axes[0];
-
-      if (!p.airborne)
-	p.velocity.x *= glm::cos(terrain->getAngle(p.position.x));
+      p.acceleration.x = axes[0] * accel_factor;
     }
+    // ---- Drag to oppose velocity
+    p.acceleration.x -= accel_factor / Player::MAX_SPEED * p.velocity.x;
+
+    // ---- Gravity
+    p.acceleration.y = Player::ACCEL_Y;
+
+    // Velocity
+    p.velocity += p.acceleration * dt;
+
+    // ---- Reduce velocity uphill
+    if (!p.airborne &&
+	glm::sign(terrainAngle) == glm::sign(p.velocity.x)) {
+      p.velocity *= glm::cos(terrainAngle);
+    }
+
+    // Position
     p.position += p.velocity * dt;
 
-    p.aimDirection = glm::atan(axes[1], axes[0]);
-
-    // Lock to terrain if not airborne
-    float terrainHeight = terrain->getHeight(p.position.x);
-
-    if (p.position.y < terrainHeight || !p.airborne) {
-      p.velocity.y = 0;
+    // ---- Terrain collision
+    if (p.position.y < terrainHeight) {
+      // Movement
+      p.acceleration.y = 0.f;
+      p.velocity.y = 0.f;
       p.position.y = terrainHeight;
 
+      // Flags
       p.airborne = false;
       p.outOfControl = false;
-      p.doubleJumpAvailable = false;
+      p.jumpAvailable = true;
     }
-    
-    if (p.position.x < Player::SIZE) p.position.x = Player::SIZE;
-    if (p.position.x > terrain->getMaxWidth() - Player::SIZE)
-      p.position.x = terrain->getMaxWidth() - Player::SIZE;
 
-    // Rotation
+    // ---- Stick to terrain for shallow angles
+    if (!p.airborne && p.position.y > terrainHeight) {
+      if(abs(terrainAngle) < Player::MAX_DOWNHILL_ANGLE) {
+        p.position.y = terrainHeight;
+      }
+      else {
+        p.airborne = true;
+      }
+    }
+
+    // Angle
     ////////////////////////////////////////////////////
-    float angleHeightModifier =
-      (150.f - p.position.y + terrainHeight) / 150.f;
+    // Line up with terrain
+    float goalAngle = terrainAngle;
+    // Reduce effect higher up 
+    float modifier = (p.position.y - terrainHeight) / 170.f;
+    if (modifier < 0.f) modifier = 0.f;
+    goalAngle += modifier *
+      (-glm::radians(20.f) * (p.velocity.x / Player::MAX_SPEED) - goalAngle);
 
-    if (angleHeightModifier < 0) angleHeightModifier = 0;
+    p.angle += 12.f * dt * (goalAngle - p.angle);
 
-    p.goalAngle = terrain->getAngle(p.position.x);
+    std::cout << p.position.y - terrainHeight << std::endl;
 
-    p.goalAngle *= angleHeightModifier;
-
-    if (p.outOfControl) {
-      p.goalAngle += 0.2f * -glm::sign(p.velocity.x);
-    }
-
-    p.angularVelocity = (p.goalAngle - p.angle) * Player::ANGLE_ACCEL_FACTOR;
-    p.angle += p.angularVelocity * dt;
+    // Aiming
+    ////////////////////////////////////////////////////
+    p.aimDirection = glm::atan(axes[1], axes[0]);
   }
 }
 
@@ -103,26 +131,26 @@ void PlayerSystem::processInput(int playerID, int button, bool action)
 
 void PlayerSystem::jump(Player& p)
 {
-  if (p.outOfControl) return;
-  if (p.airborne && !p.doubleJumpAvailable) return;
-  p.airborne = true;
+  if (!p.jumpAvailable) return;
 
-  if (!p.doubleJumpAvailable) {
-    p.doubleJumpAvailable = true;
-    p.velocity.y = Player::JUMP_SPEED;
-  } else {
-    p.doubleJumpAvailable = false;
-    p.outOfControl = false;
-    p.velocity.y = Player::JUMP_SPEED * Player::DOUBLE_JUMP_MULTIPLIER;
+  float terrainAngle = terrain->getAngle(p.position.x);
+
+  p.velocity.y = Player::JUMP_VELOCITY;
+  if (abs(terrainAngle) > Player::MIN_SIDEJUMP_ANGLE) {
+    p.velocity.x += 0.4f * Player::JUMP_VELOCITY * -glm::sin(terrainAngle); 
   }
+  p.airborne = true;
+  p.jumpAvailable = false;
 }
+
+
 
 void PlayerSystem::launchGrenade(Player& p)
 {
   // Inherit player velocity
   glm::vec2 velocity = p.velocity / 1.5f;
 
-  float strength = 400.f;
+  float strength = 500.f;
   velocity.x += strength * glm::cos(p.aimDirection);
   velocity.y += strength * -glm::sin(p.aimDirection);
 
@@ -145,10 +173,10 @@ void PlayerSystem::onExplosion(Event e)
 
       glm::vec2 launchVelocity;
 
-      launchVelocity.x = 1000.f * glm::pow( (radius-dist)/radius, 0.5);
+      launchVelocity.x = 1500.f * glm::pow( (radius-dist)/radius, 0.5);
       launchVelocity.x *= glm::sign(diff.x);
 
-      launchVelocity.y = 1000.f * glm::pow( (radius-dist)/radius, 0.5);
+      launchVelocity.y = 1500.f * glm::pow( (radius-dist)/radius, 0.5);
 
       // If we are very close in x, launch more upwards
       if (glm::abs(diff.x) < 1.5f * Player::SIZE) {

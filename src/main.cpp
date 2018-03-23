@@ -1,9 +1,12 @@
-#include <glad/glad.h>	  // OpenGL bindings
-#include <GLFW/glfw3.h>	  // OpenGL helpers
-
 #include <iostream>
 #include <sstream>
 #include <set>
+
+#include <glad/glad.h>	  // OpenGL bindings
+#include <GLFW/glfw3.h>	  // OpenGL helpers
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "ResourceManager.hpp"
 #include "Camera.hpp"
@@ -20,8 +23,6 @@
 #include "Renderer/TerrainRenderer.hpp"
 #include "Renderer/PowerupRenderer.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 int main() {
 
@@ -36,15 +37,15 @@ int main() {
   glfwWindowHint(GLFW_SAMPLES, 16);
   // glfwSwapInterval(1);
 
-  int windowWidth = 1366;
-  int windowHeight = 768;
+  int windowWidth = 960;
+  int windowHeight = 540;
 
   // Init window
   GLFWwindow* window =
     glfwCreateWindow(
 	windowWidth, windowHeight,
 	"Platformer",
-	glfwGetPrimaryMonitor(),
+	NULL,
 	NULL
 	);
 
