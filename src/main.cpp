@@ -107,9 +107,9 @@ int main() {
   
   Terrain terrain;
 
-  ProjectileSystem projectileSystem(&terrain);
-  PowerupSystem powerupSystem(&terrain);
   PlayerSystem playerSystem(&terrain);
+  ProjectileSystem projectileSystem(&terrain);
+  PowerupSystem powerupSystem(&terrain, &playerSystem);
   CameraSystem cameraSystem(&playerSystem);
   cameraSystem.setWindowDimensions(windowWidth, windowHeight);
 

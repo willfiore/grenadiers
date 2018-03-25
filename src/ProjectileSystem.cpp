@@ -50,8 +50,7 @@ void ProjectileSystem::updateGrenades(float dt)
 
     if (g.age > Grenade::LIFETIME) {
       Event e(Event::EXPLOSION);
-      e.data.push_back(g.position);
-      e.data.push_back(Grenade::EXPLOSION_RADIUS);
+      e << g.position << Grenade::EXPLOSION_RADIUS;
       EventManager::Send(e);
       grenades.erase(i);
       continue;
@@ -70,8 +69,7 @@ void ProjectileSystem::updateMissiles(float dt)
     // Terrain explosion
     if (m.position.y < terrain->getHeight(m.position.x)) {
       Event e(Event::EXPLOSION);
-      e.data.push_back(m.position);
-      e.data.push_back(Missile::EXPLOSION_RADIUS);
+      e << m.position << Missile::EXPLOSION_RADIUS;
       EventManager::Send(e);
       missiles.erase(i);
       continue;
@@ -100,8 +98,8 @@ void ProjectileSystem::spawnMissile(glm::vec2 p, glm::vec2 v)
 
 void ProjectileSystem::onPlayerFireWeapon(Event e)
 {
-  Player p = boost::any_cast<Player>(e.data[0]);
-  Weapon w = boost::any_cast<Weapon>(e.data[1]);
+  Player p = boost::any_cast<Player>(e[0]);
+  Weapon w = boost::any_cast<Weapon>(e[1]);
 
   if (w == Weapon::GRENADE) {
     float strength = 500.f;

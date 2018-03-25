@@ -22,11 +22,12 @@ public:
 
   const std::vector<Player>& getPlayers() const { return players; };
 
-  void onExplosion(Event);
-
 private:
   std::vector<Player> players;
   const Terrain* terrain;
 
   const float* axes;
+
+  void onExplosion(Event);
+  void onPowerupPickup(Event);
 };

@@ -4,6 +4,7 @@
 
 #include "Player.hpp"
 #include "Terrain.hpp"
+#include "Powerup.hpp"
 #include "Joystick.hpp"
 
 #include <glm/gtc/constants.hpp>
@@ -19,10 +20,15 @@ PlayerSystem::PlayerSystem(const Terrain* t) :
   player.weapons.insert(Weapon::GRENADE);
   player.weapons.insert(Weapon::MISSILE);
 
+  player.id = 23;
+
   players.push_back(player);
 
   EventManager::Register(Event::EXPLOSION,
       std::bind(&PlayerSystem::onExplosion, this, _1));
+  
+  EventManager::Register(Event::POWERUP_PICKUP,
+      std::bind(&PlayerSystem::onPowerupPickup, this, _1));
 }
 
 void PlayerSystem::update(float dt, const float* _a)
@@ -159,8 +165,7 @@ void PlayerSystem::fireWeapon(Player& p)
   Weapon currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
 
   Event e{Event::PLAYER_FIRE_WEAPON};
-  e.data.push_back(p);
-  e.data.push_back(currentWeapon);
+  e << p << currentWeapon;
   EventManager::Send(e);
 }
 
@@ -178,8 +183,8 @@ void PlayerSystem::cycleWeapon(Player& p)
 
 void PlayerSystem::onExplosion(Event e)
 {
-  glm::vec2 position = boost::any_cast<glm::vec2>(e.data[0]);
-  float radius = boost::any_cast<float>(e.data[1]);
+  glm::vec2 position = boost::any_cast<glm::vec2>(e[0]);
+  float radius = boost::any_cast<float>(e[1]);
 
   for (auto& p : players) {
     glm::vec2 diff = p.position - position;
@@ -205,4 +210,13 @@ void PlayerSystem::onExplosion(Event e)
       p.velocity += launchVelocity;
     }
   }
+}
+
+void PlayerSystem::onPowerupPickup(Event e)
+{
+  int powerupType = boost::any_cast<Powerup::Type>(e[0]);
+  int playerID = boost::any_cast<int>(e[1]);
+
+  std::cout << "Picked up powerup " << playerID
+    << ", " << powerupType << std::endl;
 }

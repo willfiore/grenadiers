@@ -73,8 +73,8 @@ void Terrain::update(float t, float dt) {
 
 void Terrain::onExplosion(Event e)
 {
-  glm::vec2 position = boost::any_cast<glm::vec2>(e.data[0]);
-  float radius = boost::any_cast<float>(e.data[1]);
+  glm::vec2 position = boost::any_cast<glm::vec2>(e[0]);
+  float radius = boost::any_cast<float>(e[1]);
 
   for (size_t i = 0; i < basePoints.size(); ++i) {
     glm::vec2& p = basePoints[i];
@@ -88,27 +88,4 @@ void Terrain::onExplosion(Event e)
        if (p.y < maxDepth) p.y = maxDepth;
      }
    }
-
-  // funcs.push_back([=](float x, float t) -> float {
-  //     float dt = (t - e.timestamp);
-  //     float dx = (x - position.x);
-  //     int dir = dx > 0.f ? 1 : -1;
-  //     float amp = 20.f * glm::exp(-dt) * (1.f / (1.f + glm::pow(0.01f*dx, 2)));
-  //     return amp * glm::cos(-dir * 0.5f * dx + 2.f*t);
-  //     });
-
-  // funcs.push_back([=](float x, float t) -> float {
-  //     float dt = (t - e.timestamp);
-  //     float dx = (x - position.x);
-
-  //     return -50.f * glm::cos(0.05f*dx);
-  //     });
-
-  // funcs.push_back([](float x, float t) -> float {
-  //     return 10.f * glm::cos(0.04f * x);
-  //     });
-  // funcs.push_back([](float x, float t) -> float {
-  //     return 10.f * glm::cos(0.06f * x);
-  //     });
-
 }

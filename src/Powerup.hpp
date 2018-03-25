@@ -4,6 +4,12 @@
 
 struct Powerup
 {
+  enum Type {
+    TEST,
+    NUM_POWERUPS
+  };
+
+  Type type;
   glm::vec2 position;
   glm::vec2 targetPosition;
   float angle;
