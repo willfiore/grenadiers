@@ -14,12 +14,12 @@
 
 Terrain::Terrain() :
   maxDepth(-200.f),
-  maxWidth(9000.f)
+  maxWidth(5000.f)
 {
-  for (float i = 0.f; i < maxWidth; i += 45.f) {
-    points.push_back({i, 0.f});
+  for (float i = 0.f; i < maxWidth; i += PRECISION) {
+    basePoints.push_back({i, 0.f});
   }
-  maxWidth = points.back().x;
+  maxWidth = basePoints.back().x;
 
   EventManager::Register(Event::EXPLOSION,
       std::bind(&Terrain::onExplosion, this, _1));
@@ -63,23 +63,52 @@ float Terrain::getAngle(float x) const
 }
 
 void Terrain::update(float t, float dt) {
+  points = basePoints;
+  for (auto& p : points) {
+    for (auto& f : funcs) {
+      p.y += f(p.x, t);
+    }
+  }
 }
 
 void Terrain::onExplosion(Event e)
 {
-  glm::vec2 position = boost::get<glm::vec2>(e.data[0]);
-  float radius = boost::get<float>(e.data[1]);
+  glm::vec2 position = boost::any_cast<glm::vec2>(e.data[0]);
+  float radius = boost::any_cast<float>(e.data[1]);
 
-  for (size_t i = 0; i < points.size(); ++i) {
-    glm::vec2& p = points[i];
+  for (size_t i = 0; i < basePoints.size(); ++i) {
+    glm::vec2& p = basePoints[i];
     
     float distance = glm::distance(position, p);
     if (distance < radius) {
       p.y -= 0.3f * radius *
-	glm::cos( (distance / radius) * glm::half_pi<float>()) *
-	(1 - (p.y / maxDepth));
+        glm::cos( (distance / radius) * glm::half_pi<float>()) *
+        (1 - (p.y / maxDepth));
 
-      if (p.y < maxDepth) p.y = maxDepth;
-    }
-  }
+       if (p.y < maxDepth) p.y = maxDepth;
+     }
+   }
+
+  // funcs.push_back([=](float x, float t) -> float {
+  //     float dt = (t - e.timestamp);
+  //     float dx = (x - position.x);
+  //     int dir = dx > 0.f ? 1 : -1;
+  //     float amp = 20.f * glm::exp(-dt) * (1.f / (1.f + glm::pow(0.01f*dx, 2)));
+  //     return amp * glm::cos(-dir * 0.5f * dx + 2.f*t);
+  //     });
+
+  // funcs.push_back([=](float x, float t) -> float {
+  //     float dt = (t - e.timestamp);
+  //     float dx = (x - position.x);
+
+  //     return -50.f * glm::cos(0.05f*dx);
+  //     });
+
+  // funcs.push_back([](float x, float t) -> float {
+  //     return 10.f * glm::cos(0.04f * x);
+  //     });
+  // funcs.push_back([](float x, float t) -> float {
+  //     return 10.f * glm::cos(0.06f * x);
+  //     });
+
 }

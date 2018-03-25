@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/variant.hpp>
+#include <boost/any.hpp>
 #include <vector>
 
 #include <glm/vec2.hpp>
@@ -9,18 +9,14 @@ struct Event
 {
   enum Type {
     KEY_PRESS,
+    PLAYER_FIRE_WEAPON,
     EXPLOSION
   };
 
-  Event(Type t) : type(t) {}
+  Event(Type t);
 
   Type type;
 
-  std::vector<boost::variant<
-    glm::vec2,
-    float,
-    int,
-    bool
-
-    >> data;
+  float timestamp;
+  std::vector<boost::any> data;
 };

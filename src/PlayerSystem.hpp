@@ -11,13 +11,14 @@ class ProjectileSystem;
 class PlayerSystem
 {
 public:
-  PlayerSystem(const Terrain*, ProjectileSystem*);
+  PlayerSystem(const Terrain*);
 
   void update(float dt, const float* axes);
   void processInput(int playerID, int button, bool action);
 
   void jump(Player&);
-  void launchGrenade(Player&);
+  void fireWeapon(Player&);
+  void cycleWeapon(Player&);
 
   const std::vector<Player>& getPlayers() const { return players; };
 
@@ -26,7 +27,6 @@ public:
 private:
   std::vector<Player> players;
   const Terrain* terrain;
-  ProjectileSystem* projectileSystem;
 
   const float* axes;
 };

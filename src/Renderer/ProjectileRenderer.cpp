@@ -41,9 +41,19 @@ void ProjectileRenderer::draw() const
   glBindVertexArray(VAO);
   shader.use();
 
-  for (auto g : projectileSystem->getGrenades()) {
+  for (auto& g : projectileSystem->getGrenades()) {
     glm::mat4 model = glm::mat4();
     model = glm::translate(model, glm::vec3(g.position, 1.0));
+    model = glm::scale(model, glm::vec3(Grenade::SIZE, Grenade::SIZE, 1.f));
+
+    shader.setMat4("model", model);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+  }
+
+  for (auto& m : projectileSystem->getMissiles()) {
+    glm::mat4 model = glm::mat4();
+    model = glm::translate(model, glm::vec3(m.position, 1.0));
     model = glm::scale(model, glm::vec3(Grenade::SIZE, Grenade::SIZE, 1.f));
 
     shader.setMat4("model", model);

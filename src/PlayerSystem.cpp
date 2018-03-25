@@ -5,18 +5,20 @@
 #include "Player.hpp"
 #include "Terrain.hpp"
 #include "Joystick.hpp"
-#include "ProjectileSystem.hpp"
 
 #include <glm/gtc/constants.hpp>
 
 #include <iostream>
 
-PlayerSystem::PlayerSystem(const Terrain* t, ProjectileSystem* p) :
-  terrain(t),
-  projectileSystem(p)
+PlayerSystem::PlayerSystem(const Terrain* t) :
+  terrain(t)
 {
   Player player;
-  player.position.x = 1000.f;
+  player.position.x = 100.f;
+
+  player.weapons.insert(Weapon::GRENADE);
+  player.weapons.insert(Weapon::MISSILE);
+
   players.push_back(player);
 
   EventManager::Register(Event::EXPLOSION,
@@ -35,37 +37,39 @@ void PlayerSystem::update(float dt, const float* _a)
     // Movement
     ////////////////////////////////////////////////////
 
-    // Acceleration
+    // -------- Acceleration --------
     float accel_factor = Player::ACCEL_X;
     if (p.airborne)
       accel_factor = Player::ACCEL_X_AIRBORNE;
     if (p.airborne && p.outOfControl)
       accel_factor = Player::ACCEL_X_NOCONTROL;
 
-    p.acceleration.x = 0.f;
-    // ---- Acceleration due to player input
+    // Acceleration due to player input
     if (!p.outOfControl) {
       p.acceleration.x = axes[0] * accel_factor;
+    } else {
+      p.acceleration.x = 0.f;
     }
-    // ---- Drag to oppose velocity
+
+    // Drag to oppose velocity
     p.acceleration.x -= accel_factor / Player::MAX_SPEED * p.velocity.x;
 
-    // ---- Gravity
+    // Gravity
     p.acceleration.y = Player::ACCEL_Y;
 
-    // Velocity
+    // -------- Velocity --------
     p.velocity += p.acceleration * dt;
 
-    // ---- Reduce velocity uphill
+    // Reduce velocity uphill
     if (!p.airborne &&
 	glm::sign(terrainAngle) == glm::sign(p.velocity.x)) {
       p.velocity *= glm::cos(terrainAngle);
     }
 
-    // Position
+    // -------- Position --------
     p.position += p.velocity * dt;
 
-    // ---- Terrain collision
+    // Terrain collision
     if (p.position.y < terrainHeight) {
       // Movement
       p.acceleration.y = 0.f;
@@ -78,7 +82,7 @@ void PlayerSystem::update(float dt, const float* _a)
       p.jumpAvailable = true;
     }
 
-    // ---- Stick to terrain for shallow angles
+    // Stick to terrain for shallow angles
     if (!p.airborne && p.position.y > terrainHeight) {
       if(abs(terrainAngle) < Player::MAX_DOWNHILL_ANGLE) {
         p.position.y = terrainHeight;
@@ -88,19 +92,17 @@ void PlayerSystem::update(float dt, const float* _a)
       }
     }
 
-    // Angle
-    ////////////////////////////////////////////////////
-    // Line up with terrain
+    // -------- Angle --------
     float goalAngle = terrainAngle;
-    // Reduce effect higher up 
+
     float modifier = (p.position.y - terrainHeight) / 170.f;
     if (modifier < 0.f) modifier = 0.f;
+
+    // Slightly tilt towards velocity direction
     goalAngle += modifier *
-      (-glm::radians(20.f) * (p.velocity.x / Player::MAX_SPEED) - goalAngle);
+      (-glm::radians(15.f) * (p.velocity.x / Player::MAX_SPEED) - goalAngle);
 
     p.angle += 12.f * dt * (goalAngle - p.angle);
-
-    std::cout << p.position.y - terrainHeight << std::endl;
 
     // Aiming
     ////////////////////////////////////////////////////
@@ -115,8 +117,12 @@ void PlayerSystem::processInput(int playerID, int button, bool action)
   // Press
   if (action) {
     switch (button) {
-      case JOY_BUTTON_A: jump(player); break;
-      case JOY_BUTTON_RB: launchGrenade(player); break;
+      case JOY_BUTTON_A:
+	jump(player); break;
+      case JOY_BUTTON_RB:
+	fireWeapon(player); break;
+      case JOY_BUTTON_Y:
+	cycleWeapon(player); break;
       default: break;
     }
   }
@@ -145,23 +151,35 @@ void PlayerSystem::jump(Player& p)
 
 
 
-void PlayerSystem::launchGrenade(Player& p)
+void PlayerSystem::fireWeapon(Player& p)
 {
-  // Inherit player velocity
-  glm::vec2 velocity = p.velocity / 1.5f;
+  // Can't fire if they have no weapons!
+  if (p.weapons.size() == 0) return;
 
-  float strength = 500.f;
-  velocity.x += strength * glm::cos(p.aimDirection);
-  velocity.y += strength * -glm::sin(p.aimDirection);
+  Weapon currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
 
-  projectileSystem->spawnGrenade(
-      p.position + glm::vec2(0.f, Player::SIZE), velocity);
+  Event e{Event::PLAYER_FIRE_WEAPON};
+  e.data.push_back(p);
+  e.data.push_back(currentWeapon);
+  EventManager::Send(e);
+}
+
+void PlayerSystem::cycleWeapon(Player& p)
+{
+  if (p.weapons.size() <= 1) return;
+
+  p.currentWeaponIndex++;
+
+  // Wrap
+  if(p.currentWeaponIndex >= p.weapons.size()) {
+    p.currentWeaponIndex = 0;
+  }
 }
 
 void PlayerSystem::onExplosion(Event e)
 {
-  glm::vec2 position = boost::get<glm::vec2>(e.data[0]);
-  float radius = boost::get<float>(e.data[1]);
+  glm::vec2 position = boost::any_cast<glm::vec2>(e.data[0]);
+  float radius = boost::any_cast<float>(e.data[1]);
 
   for (auto& p : players) {
     glm::vec2 diff = p.position - position;

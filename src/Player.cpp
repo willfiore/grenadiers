@@ -6,3 +6,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "ResourceManager.hpp"
+
+Player::Player()
+{
+  currentWeaponIndex = 0;
+}

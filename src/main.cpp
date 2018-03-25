@@ -23,7 +23,6 @@
 #include "Renderer/TerrainRenderer.hpp"
 #include "Renderer/PowerupRenderer.hpp"
 
-
 int main() {
 
   ////////////////////////
@@ -60,11 +59,7 @@ int main() {
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     return -1;
 
-  // glEnable(GL_CULL_FACE);
-
-  // Blending
-  glEnable (GL_BLEND);
-  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_DEPTH_TEST);
 
   ////////////////////////////////////////////////
   // Projection and camera transformation matrices
@@ -106,7 +101,7 @@ int main() {
       );
 
   ResourceManager::LoadShader(
-      "../assets/shaders/base.vert", "../assets/shaders/terrain.frag",
+      "../assets/shaders/terrain.vert", "../assets/shaders/terrain.frag",
       "terrain"
       );
   
@@ -114,7 +109,7 @@ int main() {
 
   ProjectileSystem projectileSystem(&terrain);
   PowerupSystem powerupSystem(&terrain);
-  PlayerSystem playerSystem(&terrain, &projectileSystem);
+  PlayerSystem playerSystem(&terrain);
   CameraSystem cameraSystem(&playerSystem);
   cameraSystem.setWindowDimensions(windowWidth, windowHeight);
 
@@ -147,8 +142,15 @@ int main() {
       //////////////////////////////////////////
 
       int count;
+      int joy = GLFW_JOYSTICK_1;
+
+      // DIRTY HACK:
+      // Stop my accelerometer from taking priority as the joystick
+      if (glfwGetJoystickName(joy)[0] == 'S')
+	joy = GLFW_JOYSTICK_2;
+
       const unsigned char* buttons =
-	glfwGetJoystickButtons(GLFW_JOYSTICK_1, &count);
+	glfwGetJoystickButtons(joy, &count);
 
       for (int i = 0; i < count; ++i) {
 	bool buttonDown = (bool)buttons[i];
@@ -167,7 +169,7 @@ int main() {
       }
 
       // Tick update
-      const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
+      const float* axes = glfwGetJoystickAxes(joy, &count);
       playerSystem.update(dt, axes);
       projectileSystem.update(dt);
       powerupSystem.update(dt);
@@ -182,7 +184,7 @@ int main() {
     /////////
 
     // glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     // Camera
     glm::mat4 view = cameraSystem.getView();
