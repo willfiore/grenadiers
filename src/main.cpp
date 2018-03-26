@@ -33,18 +33,17 @@ int main() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_SAMPLES, 16);
-  // glfwSwapInterval(1);
+  glfwSwapInterval(1);
 
-  int windowWidth = 960;
-  int windowHeight = 540;
+  int windowWidth = 1366;
+  int windowHeight = 768;
 
   // Init window
   GLFWwindow* window =
     glfwCreateWindow(
 	windowWidth, windowHeight,
 	"Platformer",
-	NULL,
+	glfwGetPrimaryMonitor(),
 	NULL
 	);
 
@@ -95,6 +94,59 @@ int main() {
       glm::value_ptr(glm::mat4()));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+  
+  // FBO for first pass render (before post)
+  unsigned FBO;
+  glGenFramebuffers(1, &FBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+  unsigned int FBO_texColorBuffer;
+  glGenTextures(1, &FBO_texColorBuffer);
+  glBindTexture(GL_TEXTURE_2D, FBO_texColorBuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight,
+      0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+      FBO_texColorBuffer, 0);
+
+  unsigned int FBO_RBO;
+  glGenRenderbuffers(1, &FBO_RBO);
+  glBindRenderbuffer(GL_RENDERBUFFER, FBO_RBO);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8,
+      windowWidth, windowHeight);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+      GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, FBO_RBO);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  float screenQuadVerts[] = { 
+    // positions   // texCoords
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f,
+    1.0f, -1.0f,  1.0f, 0.0f,
+
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    1.0f, -1.0f,  1.0f, 0.0f,
+    1.0f,  1.0f,  1.0f, 1.0f
+  };
+
+  unsigned int screenVAO, screenVBO;
+  glGenVertexArrays(1, &screenVAO);
+  glGenBuffers(1, &screenVBO);
+  glBindVertexArray(screenVAO);
+  glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(screenQuadVerts),
+      &screenQuadVerts, GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+      (void*)(2 * sizeof(float)));
+
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    std::cout << "Error: Incomplete frame buffer" << std::endl;
+
   ResourceManager::LoadShader(
       "../assets/shaders/base.vert", "../assets/shaders/base.frag",
       "base"
@@ -104,6 +156,14 @@ int main() {
       "../assets/shaders/terrain.vert", "../assets/shaders/terrain.frag",
       "terrain"
       );
+
+  Shader shader_post = ResourceManager::LoadShader(
+      "../assets/shaders/post.vert", "../assets/shaders/post.frag",
+      "post"
+      );
+
+  shader_post.use();
+  shader_post.setInt("screenTexture", 0);
   
   Terrain terrain;
 
@@ -124,8 +184,6 @@ int main() {
   const float dt = 1.f/60.f; // logic tickrate
   double currentTime = glfwGetTime();
   double accumulator = 0.0;
-
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   while (!glfwWindowShouldClose(window)) {
 
@@ -183,8 +241,11 @@ int main() {
     // Render
     /////////
 
-    // glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    // First pass
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Camera
     glm::mat4 view = cameraSystem.getView();
@@ -198,8 +259,19 @@ int main() {
     projectileRenderer.draw();
     powerupRenderer.draw();
 
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
-	glm::value_ptr(glm::mat4()));
+    // Post process pass
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    shader_post.use();
+    glBindVertexArray(screenVAO);
+    glBindTexture(GL_TEXTURE_2D, FBO_texColorBuffer);
+
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glBindVertexArray(0);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

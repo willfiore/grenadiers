@@ -24,14 +24,11 @@ highp float rand(vec2 co)
 void main() {
   vec3 lightColor = vec3(1.0, 1.0, 1.0) * 0.4;
   vec3 norm = normalize(Normal);
-  vec3 lightDir = vec3(0.0, -1.0, 0.2);
+  vec3 lightDir = vec3(0.0, -1.0, 0.1);
 
   // Ambient
-  float ambientStrength = 0.07;
-  vec3 ambient = vec3(0.0, 0.0, 0.0);
-  ambient.r = rand(gl_FragCoord.xy * time);
-  ambient.g = rand(gl_FragCoord.xy * time * 2);
-  ambient.b = rand(gl_FragCoord.xy * time * 3);
+  float ambientStrength = 0.0;
+  vec3 ambient = vec3(1.0, 1.0, 1.0);
   ambient *= ambientStrength;
 
   // Diffuse
@@ -39,14 +36,14 @@ void main() {
   vec3 diffuse = diff * lightColor;
 
   // Specular
-  // float specularStrength = 0.1;
-  // vec3 viewPos = vec3(inverse(view)[3]);
-  // vec3 viewDir = normalize(viewPos - FragPos);
-  // vec3 reflectDir = reflect(lightDir, norm);
-  // float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-  // vec3 specular = specularStrength * spec * lightColor;
+  float specularStrength = 0.1;
+  vec3 viewPos = vec3(inverse(view)[3]);
+  vec3 viewDir = normalize(viewPos - FragPos);
+  vec3 reflectDir = reflect(lightDir, norm);
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+  vec3 specular = specularStrength * spec * lightColor;
 
-  vec3 result = (ambient + diffuse) * vec3(1.0, 1.0, 1.0);
+  vec3 result = (ambient + diffuse + specular) * vec3(1.0, 1.0, 1.0);
 
   FragColor = vec4(result, 1.0);
 }
