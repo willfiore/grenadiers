@@ -44,7 +44,7 @@ void TerrainRenderer::draw() const
   std::vector<glm::vec3> verts;
 
   float forwardDepth = 40.f;
-  float backwardDepth = -10.f;
+  float backwardDepth = -40.f;
   
   for (size_t i = 0; i < points.size(); ++i) {
     const glm::vec2& p1 = points[i];

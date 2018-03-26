@@ -113,7 +113,7 @@ void ProjectileSystem::onPlayerFireWeapon(Event e)
   }
 
   if (w == Weapon::MISSILE) {
-    float strength = 1000.f;
+    float strength = 1500.f;
 
     glm::vec2 velocity;
     velocity.x += strength * glm::cos(p.aimDirection);

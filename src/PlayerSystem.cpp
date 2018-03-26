@@ -18,9 +18,8 @@ PlayerSystem::PlayerSystem(const Terrain* t) :
   player.position.x = 100.f;
 
   player.weapons.insert(Weapon::GRENADE);
-  player.weapons.insert(Weapon::MISSILE);
 
-  player.id = 23;
+  player.id = 0;
 
   players.push_back(player);
 
@@ -37,6 +36,7 @@ void PlayerSystem::update(float dt, const float* _a)
 
   for (auto& p : players) {
 
+    float terrainMaxWidth = terrain->getMaxWidth();
     float terrainHeight = terrain->getHeight(p.position.x);
     float terrainAngle = terrain->getAngle(p.position.x);
 
@@ -75,6 +75,11 @@ void PlayerSystem::update(float dt, const float* _a)
     // -------- Position --------
     p.position += p.velocity * dt;
 
+    if (p.position.x - Player::SIZE < 0)
+      p.position.x = Player::SIZE;
+    else if (p.position.x + Player::SIZE > terrainMaxWidth)
+      p.position.x = terrainMaxWidth - Player::SIZE;
+
     // Terrain collision
     if (p.position.y < terrainHeight) {
       // Movement
@@ -101,12 +106,16 @@ void PlayerSystem::update(float dt, const float* _a)
     // -------- Angle --------
     float goalAngle = terrainAngle;
 
-    float modifier = (p.position.y - terrainHeight) / 170.f;
-    if (modifier < 0.f) modifier = 0.f;
+    float heightModifier = (p.position.y - terrainHeight) / 170.f;
+    if (heightModifier < 0.f) heightModifier = 0.f;
+    if (heightModifier > 1.f) heightModifier = 1.f;
+
+    float velocityModifier = p.velocity.y / Player::MAX_SPEED;
+    if (velocityModifier > 1.0f) velocityModifier = 1.0f;
 
     // Slightly tilt towards velocity direction
-    goalAngle += modifier *
-      (-glm::radians(15.f) * (p.velocity.x / Player::MAX_SPEED) - goalAngle);
+    goalAngle += heightModifier *
+      (-glm::radians(15.f) * velocityModifier - goalAngle);
 
     p.angle += 12.f * dt * (goalAngle - p.angle);
 
@@ -143,7 +152,7 @@ void PlayerSystem::processInput(int playerID, int button, bool action)
 
 void PlayerSystem::jump(Player& p)
 {
-  if (!p.jumpAvailable) return;
+  if (!p.jumpAvailable || p.outOfControl) return;
 
   float terrainAngle = terrain->getAngle(p.position.x);
 
@@ -190,25 +199,25 @@ void PlayerSystem::onExplosion(Event e)
     glm::vec2 diff = p.position - position;
     float dist = glm::length(diff);
 
-    if (dist < radius) {
-      p.airborne = true;
-      p.outOfControl = true;
+    if (dist > radius) continue;
 
-      glm::vec2 launchVelocity;
+    p.airborne = true;
+    p.outOfControl = true;
 
-      launchVelocity.x = 1500.f * glm::pow( (radius-dist)/radius, 0.5);
-      launchVelocity.x *= glm::sign(diff.x);
+    glm::vec2 launchVelocity;
 
-      launchVelocity.y = 1500.f * glm::pow( (radius-dist)/radius, 0.5);
+    launchVelocity.x = 1500.f * glm::pow( (radius-dist)/radius, 0.5);
+    launchVelocity.x *= glm::sign(diff.x);
 
-      // If we are very close in x, launch more upwards
-      if (glm::abs(diff.x) < 1.5f * Player::SIZE) {
-	launchVelocity.x *= 0.2f;
-	launchVelocity.y *= 1.5f;
-      }
+    launchVelocity.y = 1500.f * glm::pow( (radius-dist)/radius, 0.5);
 
-      p.velocity += launchVelocity;
+    // If we are very close in x, launch more upwards
+    if (glm::abs(diff.x) < 1.5f * Player::SIZE) {
+      launchVelocity.x *= 0.2f;
+      launchVelocity.y *= 1.5f;
     }
+
+    p.velocity += launchVelocity;
   }
 }
 
@@ -217,6 +226,5 @@ void PlayerSystem::onPowerupPickup(Event e)
   int powerupType = boost::any_cast<Powerup::Type>(e[0]);
   int playerID = boost::any_cast<int>(e[1]);
 
-  std::cout << "Picked up powerup " << playerID
-    << ", " << powerupType << std::endl;
+  Player& p = players[playerID];
 }

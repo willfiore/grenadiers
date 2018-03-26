@@ -12,7 +12,9 @@ class EventManager
 {
 public:
   static void Register(Event::Type, std::function<void(Event)>);
+
   static void Send(Event);
+  static void Send(Event::Type);
 private:
   EventManager() {};
 

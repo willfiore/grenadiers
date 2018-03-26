@@ -20,6 +20,7 @@ Terrain::Terrain() :
     basePoints.push_back({i, 0.f});
   }
   maxWidth = basePoints.back().x;
+  points = basePoints;
 
   EventManager::Register(Event::EXPLOSION,
       std::bind(&Terrain::onExplosion, this, _1));
@@ -33,7 +34,7 @@ float Terrain::getHeight(float x) const
     if (x < p1.x) {
 
       // Before first point
-      if (i == 0) return 0.f;
+      if (i == 0) return -1000.f;
       glm::vec2 p2 = points[i-1];
 
       float a = (x - p1.x) / (p2.x - p1.x);
@@ -43,7 +44,7 @@ float Terrain::getHeight(float x) const
     }
   }
 
-  return 0.f;
+  return -1000.f;
 }
 
 float Terrain::getAngle(float x) const
@@ -64,11 +65,34 @@ float Terrain::getAngle(float x) const
 
 void Terrain::update(float t, float dt) {
   points = basePoints;
-  for (auto& p : points) {
-    for (auto& f : funcs) {
-      p.y += f(p.x, t);
+
+  for (auto it = modifiers.begin(); it != modifiers.end();) {
+    auto& m = *it;
+
+    m.age += dt;
+    if (m.age > m.lifetime) {
+      modifiers.erase(it);
+      continue;
     }
+
+    for (auto& p : points) {
+      p.y += m.func(p.x, t);
+    }
+
+    ++it;
   }
+}
+
+void Terrain::addFunc(
+    const std::function<float(float, float)>& func,
+    float lifetime)
+{
+  TerrainPointModifier m;
+  m.lifetime = lifetime;
+  m.age = 0.0f;
+  m.func = func;
+
+  modifiers.push_back(m);
 }
 
 void Terrain::onExplosion(Event e)
@@ -88,4 +112,20 @@ void Terrain::onExplosion(Event e)
        if (p.y < maxDepth) p.y = maxDepth;
      }
    }
+
+  addFunc([=](float x, float t) -> float {
+
+      // Oscillate up and down over time
+      float r = 7.f * -glm::cos(20.f*t);
+
+      // Fade out over time
+      float dt = t - e.timestamp;
+      float mt = glm::exp(-4.f*dt);
+
+      // Fade out over distance
+      float dx = glm::abs(x - position.x);
+      float mx = glm::exp(-dx / 200.f);
+
+      return r * mx * mt;
+      }, 4.f);
 }

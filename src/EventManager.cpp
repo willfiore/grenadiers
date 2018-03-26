@@ -16,3 +16,12 @@ void EventManager::Send(Event e)
     func(e);
   }
 }
+
+void EventManager::Send(Event::Type t)
+{
+  Event e{t};
+
+  for (auto& func : funcs[t]) {
+    func(e);
+  }
+}

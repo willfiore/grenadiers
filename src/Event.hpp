@@ -9,6 +9,7 @@ struct Event
 {
   enum Type {
     KEY_PRESS,
+    GAME_START,
     PLAYER_FIRE_WEAPON,
     POWERUP_PICKUP,
     EXPLOSION

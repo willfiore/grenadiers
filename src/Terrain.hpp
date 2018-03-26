@@ -6,6 +6,13 @@
 
 #include "Event.hpp"
 
+struct TerrainPointModifier
+{
+  std::function<float(float, float)> func;
+  float age;
+  float lifetime;
+};
+
 class Terrain {
 public:
   Terrain();
@@ -21,6 +28,7 @@ public:
   const std::vector<glm::vec2>& getPoints() const { return points; }
 
   void update(float t, float dt);
+  void addFunc(const std::function<float(float, float)>&, float);
 
 private:
   void onExplosion(Event e);
@@ -29,6 +37,6 @@ private:
   float maxWidth;
 
   std::vector<glm::vec2> basePoints;
-  std::vector<std::function<float(float, float)> > funcs;
+  std::vector<TerrainPointModifier> modifiers;
   std::vector<glm::vec2> points;
 };

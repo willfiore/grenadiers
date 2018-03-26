@@ -35,15 +35,15 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwSwapInterval(1);
 
-  int windowWidth = 1366;
-  int windowHeight = 768;
+  int windowWidth = 960;
+  int windowHeight = 540;
 
   // Init window
   GLFWwindow* window =
     glfwCreateWindow(
 	windowWidth, windowHeight,
 	"Platformer",
-	glfwGetPrimaryMonitor(),
+	NULL,
 	NULL
 	);
 
@@ -184,6 +184,8 @@ int main() {
   const float dt = 1.f/60.f; // logic tickrate
   double currentTime = glfwGetTime();
   double accumulator = 0.0;
+
+  EventManager::Send(Event::GAME_START);
 
   while (!glfwWindowShouldClose(window)) {
 

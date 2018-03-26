@@ -46,5 +46,5 @@ glm::mat4 CameraSystem::getView() const
 
 void CameraSystem::onExplosion(Event e)
 {
-  shake = 18.f;
+  shake = 12.f;
 }

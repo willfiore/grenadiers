@@ -8,11 +8,15 @@
 #include "PlayerSystem.hpp"
 #include "EventManager.hpp"
 
+#include <iostream>
+
 PowerupSystem::PowerupSystem(const Terrain* t, const PlayerSystem* p) :
   terrain(t),
   playerSystem(p)
 {
-  spawnPowerup();
+  EventManager::Register(Event::GAME_START, [this](Event e) {
+      this->spawnPowerup();
+      });
 }
 
 void PowerupSystem::update(float dt)
@@ -21,9 +25,9 @@ void PowerupSystem::update(float dt)
     auto& p = *it;
 
     if (!p.landed) {
-      float speed = 2200.f;
-      p.position.y -= speed * dt * glm::sin(p.angle);
-      p.position.x -= speed * dt * glm::cos(p.angle);
+      float speed = 1500.f;
+      p.position.x -= speed * dt * glm::sin(p.angle);
+      p.position.y -= speed * dt * glm::cos(p.angle);
 
       if (p.position.y < terrain->getHeight(p.position.x)) {
 	p.landed = true;
@@ -67,15 +71,17 @@ void PowerupSystem::spawnPowerup()
   Powerup p;
   p.landed = false;
 
-  p.targetPosition.x = 400.f;
+  p.targetPosition.x = 600.f;
   p.targetPosition.y = terrain->getHeight(p.targetPosition.x);
+
+  std::cout << p.targetPosition.x << ", " << p.targetPosition.y << std::endl;
   
-  p.angle = glm::half_pi<float>() +
+  p.angle =
     Random::randomFloat(-glm::quarter_pi<float>(), glm::quarter_pi<float>());
 
   p.position = p.targetPosition;
-  p.position.x += 2000.f * glm::cos(p.angle);
-  p.position.y += 2000.f * glm::sin(p.angle);
+  p.position.x += 2000.f * glm::sin(p.angle);
+  p.position.y += 2000.f * glm::cos(p.angle);
 
   p.type = Powerup::Type::TEST;
 
