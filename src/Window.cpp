@@ -11,10 +11,6 @@ void glfw_key_callback(GLFWwindow* window,
     int key, int scancode, int action, int mods)
 {
   if (!action) return;
-
-  Event e{Event::KEY_PRESS};
-  e << key;
-  EventManager::Send(e);
 }
 
 Window::Window() :
@@ -45,9 +41,6 @@ Window::Window() :
   glfwSetKeyCallback(window, glfw_key_callback);
 
   generateFBO();
-
-  EventManager::Register(Event::KEY_PRESS,
-      std::bind(&Window::onKeyPress, this, _1));
 }
 
 void Window::render()
@@ -113,7 +106,3 @@ void Window::generateFBO()
       (void*)(2 * sizeof(float)));
 }
 
-void Window::onKeyPress(Event e)
-{
-  int code = boost::any_cast<int>(e[0]);
-}

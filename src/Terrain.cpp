@@ -97,17 +97,16 @@ void Terrain::addFunc(
 
 void Terrain::onExplosion(Event e)
 {
-  glm::vec2 position = boost::any_cast<glm::vec2>(e[0]);
-  float radius = boost::any_cast<float>(e[1]);
+  auto d = boost::any_cast<EvdExplosion>(e.data);
 
   // Deform terrain
   for (size_t i = 0; i < basePoints.size(); ++i) {
     glm::vec2& p = basePoints[i];
     
-    float distance = glm::distance(position, p);
-    if (distance < radius) {
-      p.y -= 0.3f * radius *
-        glm::cos( (distance / radius) * glm::half_pi<float>()) *
+    float distance = glm::distance(d.position, p);
+    if (distance < d.radius) {
+      p.y -= 0.3f * d.radius *
+        glm::cos( (distance / d.radius) * glm::half_pi<float>()) *
         (1 - (p.y / maxDepth));
 
        if (p.y < maxDepth) p.y = maxDepth;
@@ -125,7 +124,7 @@ void Terrain::onExplosion(Event e)
       float mt = glm::exp(-4.f*dt);
 
       // Fade out over distance
-      float dx = glm::abs(x - position.x);
+      float dx = glm::abs(x - d.position.x);
       float mx = glm::exp(-dx / 200.f);
 
       return r * mx * mt;

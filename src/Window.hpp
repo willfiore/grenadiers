@@ -35,6 +35,4 @@ private:
   unsigned int VAO, VBO; // final quad to draw
 
   void generateFBO();
-
-  void onKeyPress(Event);
 };

@@ -10,18 +10,16 @@ void EventManager::Register(Event::Type type, std::function<void(Event)> func)
   funcs[type].push_back(func);
 }
 
-void EventManager::Send(Event e)
+void EventManager::Send(Event::Type t, boost::any d)
 {
-  for (auto& func : funcs[e.type]) {
+  Event e{t};
+  e.data = d;
+
+  for (auto& func : funcs[e.type])
     func(e);
-  }
 }
 
 void EventManager::Send(Event::Type t)
 {
-  Event e{t};
-
-  for (auto& func : funcs[t]) {
-    func(e);
-  }
+  Send(t, NULL);
 }

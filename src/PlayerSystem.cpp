@@ -12,14 +12,16 @@
 
 #include <iostream>
 
-PlayerSystem::PlayerSystem(const Terrain* t, const std::map<int, ControllerData>* c) :
+PlayerSystem::PlayerSystem(
+    const Terrain* t,
+    const std::map<int, ControllerData>* c) :
   terrain(t),
   controllers(c)
 {
   for (const auto& c : *controllers) {
     Player player;
     player.position.x = 2000.f + Random::randomFloat(0.f, 200.f);
-    player.weapons.insert(Weapon::GRENADE);
+    player.weapons.insert({Weapon::GRENADE, Weapon::MISSILE});
     player.id = players.size();
     player.controllerID = c.first;
 
@@ -193,9 +195,10 @@ void PlayerSystem::fireWeapon(Player& p)
 
   Weapon currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
 
-  Event e{Event::PLAYER_FIRE_WEAPON};
-  e << p << currentWeapon;
-  EventManager::Send(e);
+  EvdPlayerFireWeapon d;
+  d.player = p;
+  d.weapon = currentWeapon;
+  EventManager::Send(Event::PLAYER_FIRE_WEAPON, d);
 }
 
 void PlayerSystem::cycleWeapon(Player& p)
@@ -212,24 +215,32 @@ void PlayerSystem::cycleWeapon(Player& p)
 
 void PlayerSystem::onExplosion(Event e)
 {
-  glm::vec2 position = boost::any_cast<glm::vec2>(e[0]);
-  float radius = boost::any_cast<float>(e[1]);
+  auto d = boost::any_cast<EvdExplosion>(e.data);
 
   for (auto& p : players) {
-    glm::vec2 diff = p.position - position;
+    glm::vec2 diff = p.position - d.position;
     float dist = glm::length(diff);
 
-    if (dist > radius) continue;
+    if (dist > d.radius) continue;
+
+    // Damage falloff
+    float damage = d.damage * (1 - glm::pow((dist / d.radius), 0.74f));
+
+    if (damage < 0.1*d.damage)
+      damage = 0.1 * d.damage;
+
+    p.health -= damage;
+    std::cout << damage << std::endl;
 
     p.airborne = true;
     p.outOfControl = true;
 
     glm::vec2 launchVelocity;
 
-    launchVelocity.x = 1500.f * glm::pow( (radius-dist)/radius, 0.5);
+    launchVelocity.x = 1500.f * glm::pow( (d.radius-dist)/d.radius, 0.5);
     launchVelocity.x *= glm::sign(diff.x);
 
-    launchVelocity.y = 1500.f * glm::pow( (radius-dist)/radius, 0.5);
+    launchVelocity.y = 1500.f * glm::pow( (d.radius-dist)/d.radius, 0.5);
 
     // If we are very close in x, launch more upwards
     if (glm::abs(diff.x) < 1.5f * Player::SIZE) {
@@ -243,8 +254,7 @@ void PlayerSystem::onExplosion(Event e)
 
 void PlayerSystem::onPowerupPickup(Event e)
 {
-  int powerupType = boost::any_cast<Powerup::Type>(e[0]);
-  int playerID = boost::any_cast<int>(e[1]);
+  auto d = boost::any_cast<EvdPowerupPickup>(e.data);
 
-  Player& p = players[playerID];
+  Player& p = players[d.playerID];
 }

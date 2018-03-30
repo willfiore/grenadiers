@@ -5,6 +5,8 @@
 
 #include <glm/vec2.hpp>
 
+#include "Player.hpp"
+
 struct Event
 {
   enum Type {
@@ -17,19 +19,26 @@ struct Event
 
   Event(Type t);
 
-  inline Event& operator<< (boost::any a) {
-    data.push_back(a);
-    return *this;
-  }
-
-  inline boost::any operator[] (size_t i) {
-    return data[i];
-  }
-
   Type type;
-
   float timestamp;
-  
-private:
-  std::vector<boost::any> data;
+  boost::any data;
+};
+
+struct EvdExplosion
+{
+  glm::vec2 position;
+  float radius;
+  float damage;
+};
+
+struct EvdPowerupPickup
+{
+  int powerupType;
+  int playerID;
+};
+
+struct EvdPlayerFireWeapon
+{
+  Player player;
+  Weapon weapon;
 };

@@ -49,9 +49,12 @@ void ProjectileSystem::updateGrenades(float dt)
     }
 
     if (g.age > Grenade::LIFETIME) {
-      Event e(Event::EXPLOSION);
-      e << g.position << Grenade::EXPLOSION_RADIUS;
-      EventManager::Send(e);
+      EvdExplosion d;
+      d.position = g.position;
+      d.radius = Grenade::EXPLOSION_RADIUS;
+      d.damage = 60.f;
+      EventManager::Send(Event::EXPLOSION, d);
+
       grenades.erase(i);
       continue;
     }
@@ -66,11 +69,15 @@ void ProjectileSystem::updateMissiles(float dt)
 
     m.position += m.velocity * dt;
 
-    // Terrain explosion
+    // Explode on terrain hit
     if (m.position.y < terrain->getHeight(m.position.x)) {
-      Event e(Event::EXPLOSION);
-      e << m.position << Missile::EXPLOSION_RADIUS;
-      EventManager::Send(e);
+
+      EvdExplosion d;
+      d.position = m.position;
+      d.radius = Missile::EXPLOSION_RADIUS;
+      d.damage = 80.f;
+      EventManager::Send(Event::EXPLOSION, d);
+
       missiles.erase(i);
       continue;
     }
@@ -98,27 +105,26 @@ void ProjectileSystem::spawnMissile(glm::vec2 p, glm::vec2 v)
 
 void ProjectileSystem::onPlayerFireWeapon(Event e)
 {
-  Player p = boost::any_cast<Player>(e[0]);
-  Weapon w = boost::any_cast<Weapon>(e[1]);
+  auto d = boost::any_cast<EvdPlayerFireWeapon>(e.data);
 
-  if (w == Weapon::GRENADE) {
+  if (d.weapon == Weapon::GRENADE) {
     float strength = 500.f;
 
     // Inherit player velocity
-    glm::vec2 velocity = p.velocity * 0.66f;
-    velocity.x += strength * glm::cos(p.aimDirection);
-    velocity.y += strength * -glm::sin(p.aimDirection);
+    glm::vec2 velocity = d.player.velocity * 0.66f;
+    velocity.x += strength * glm::cos(d.player.aimDirection);
+    velocity.y += strength * -glm::sin(d.player.aimDirection);
 
-    spawnGrenade(p.position, velocity);
+    spawnGrenade(d.player.position, velocity);
   }
 
-  if (w == Weapon::MISSILE) {
+  if (d.weapon == Weapon::MISSILE) {
     float strength = 1500.f;
 
     glm::vec2 velocity;
-    velocity.x += strength * glm::cos(p.aimDirection);
-    velocity.y += strength * -glm::sin(p.aimDirection);
+    velocity.x += strength * glm::cos(d.player.aimDirection);
+    velocity.y += strength * -glm::sin(d.player.aimDirection);
 
-    spawnMissile(p.position, velocity);
+    spawnMissile(d.player.position, velocity);
   }
 }

@@ -32,9 +32,11 @@ void PowerupSystem::update(float dt)
       if (p.position.y < terrain->getHeight(p.position.x)) {
 	p.landed = true;
 	
-	Event e{Event::EXPLOSION};
-	e << p.position << 100.f;
-	EventManager::Send(e);
+	EvdExplosion d;
+	d.position = p.position;
+	d.radius = 100.f;
+	d.damage = 0.f;
+	EventManager::Send(Event::EXPLOSION, d);
       }
     }
 
@@ -54,9 +56,11 @@ void PowerupSystem::update(float dt)
 
       // Player picked up powerup
       if (playerID != -1) {
-	Event e{Event::POWERUP_PICKUP};
-	e << p.type << playerID;
-	EventManager::Send(e);
+	EvdPowerupPickup d;
+	d.powerupType = p.type;
+	d.playerID = playerID;
+	EventManager::Send(Event::POWERUP_PICKUP, d);
+
 	powerups.erase(it);
 	continue;
       }

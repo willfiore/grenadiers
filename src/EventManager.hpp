@@ -13,8 +13,8 @@ class EventManager
 public:
   static void Register(Event::Type, std::function<void(Event)>);
 
-  static void Send(Event);
   static void Send(Event::Type);
+  static void Send(Event::Type, boost::any);
 private:
   EventManager() {};
 

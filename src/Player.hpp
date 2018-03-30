@@ -30,16 +30,18 @@ struct Player {
   // State
   //////////////////////////////////////////////
 
-  int id {-1};
-  int controllerID {-1};
+  int id;
+  int controllerID;
 
-  glm::vec2 position {0.f, 0.f};
-  glm::vec2 velocity {0.f, 0.f};
-  glm::vec2 acceleration {0.f, 0.f};
+  // Physics
+  glm::vec2 position;
+  glm::vec2 velocity;
+  glm::vec2 acceleration;
+  float angle;
+  float aimDirection;
 
-  float angle {0.f};
-  float aimDirection {0.f};
-
+  // State
+  float health;
   std::set<Weapon> weapons;
   std::set<Weapon>::size_type currentWeaponIndex;
 
