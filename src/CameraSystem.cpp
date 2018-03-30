@@ -1,15 +1,18 @@
 #include "CameraSystem.hpp"
-#include <glm/gtc/matrix_transform.hpp>
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+
 #include "Random.hpp"
+#include "Window.hpp"
 #include "EventManager.hpp"
 #include "PlayerSystem.hpp"
 #include "ResourceManager.hpp"
 
 #include <numeric>
 
-CameraSystem::CameraSystem(const std::vector<Player>& p) :
+CameraSystem::CameraSystem(const Window* w, const std::vector<Player>& p) :
+  window(w),
   players(p)
 {
   fov = 60.f;
@@ -66,12 +69,6 @@ void CameraSystem::update(float dt)
       std::bind(&CameraSystem::onExplosion, this, _1));
 }
 
-void CameraSystem::setWindowDimensions(int w, int h)
-{
-  windowWidth = w;
-  windowHeight = h;
-}
-
 glm::mat4 CameraSystem::getView() const
 {
   glm::mat4 view;
@@ -87,7 +84,7 @@ glm::mat4 CameraSystem::getProjection() const
 {
   glm::mat4 projection = glm::perspective(
       glm::radians(fov),
-      (float)windowWidth / (float)windowHeight,
+      (float)window->getWidth() / (float)window->getHeight(),
       0.01f, 10000.f
       );
 

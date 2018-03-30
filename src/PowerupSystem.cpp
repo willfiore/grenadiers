@@ -71,7 +71,7 @@ void PowerupSystem::spawnPowerup()
   Powerup p;
   p.landed = false;
 
-  p.targetPosition.x = 600.f;
+  p.targetPosition.x = 1950.f;
   p.targetPosition.y = terrain->getHeight(p.targetPosition.x);
 
   p.angle =

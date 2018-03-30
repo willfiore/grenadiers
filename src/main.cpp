@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <sstream>
 
@@ -12,6 +13,7 @@
 
 #include "ControllerData.hpp"
 
+#include "Window.hpp"
 #include "ResourceManager.hpp"
 #include "Terrain.hpp"
 #include "Player.hpp"
@@ -28,46 +30,18 @@
 
 int main() {
 
-  ////////////////////////
-  // Window initialization
-  ////////////////////////
+  /////////////////
+  // Initialization
+  /////////////////
 
   glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwSwapInterval(1);
 
-  int windowWidth = 960;
-  int windowHeight = 540;
-
-  // Init window
-  GLFWwindow* window =
-    glfwCreateWindow(
-	windowWidth, windowHeight,
-	"Platformer",
-	NULL,
-	NULL
-	);
-
-  if (window == NULL) {
-    glfwTerminate();
-    return -1;
-  }
-  glfwMakeContextCurrent(window);
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-
-  // Init GLAD
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    return -1;
-
+  Window w;
   glEnable(GL_DEPTH_TEST);
 
   ////////////////////////////////////////////////
   // Projection and camera transformation matrices
   ////////////////////////////////////////////////
-
-  glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
   // Initialize space in UBO
   unsigned int UBO;
@@ -85,71 +59,6 @@ int main() {
 
   // -----------------------------------
 
-  // Create FBO for initial render
-  unsigned int FBO;
-  unsigned int FBO_buffer;
-  glGenFramebuffers(1, &FBO);
-  glGenTextures(1, &FBO_buffer);
-
-  glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-  glBindTexture(GL_TEXTURE_2D, FBO_buffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight,
-      0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-      FBO_buffer, 0);
-  // We require a depth buffer here
-  unsigned int FBO_RBO;
-  glGenRenderbuffers(1, &FBO_RBO);
-  glBindRenderbuffer(GL_RENDERBUFFER, FBO_RBO);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8,
-      windowWidth, windowHeight);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER,
-      GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, FBO_RBO);
-
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  // Create ping-pong FBOs for post
-  unsigned int ppFBO[2];
-  unsigned int ppFBO_buffer[2];
-  glGenFramebuffers(2, ppFBO);
-  glGenTextures(2, ppFBO_buffer);
-
-  for (unsigned int i = 0; i < 2; ++i) {
-    glBindFramebuffer(GL_FRAMEBUFFER, ppFBO[i]);
-    glBindTexture(GL_TEXTURE_2D, ppFBO_buffer[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight,
-	0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-	ppFBO_buffer[i], 0);
-  }
-
-  float screenQuadVerts[] = { 
-    // positions   // texCoords
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    -1.0f, -1.0f,  0.0f, 0.0f,
-    1.0f, -1.0f,  1.0f, 0.0f,
-
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    1.0f, -1.0f,  1.0f, 0.0f,
-    1.0f,  1.0f,  1.0f, 1.0f
-  };
-
-  unsigned int screenVAO, screenVBO;
-  glGenVertexArrays(1, &screenVAO);
-  glGenBuffers(1, &screenVBO);
-  glBindVertexArray(screenVAO);
-  glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(screenQuadVerts),
-      &screenQuadVerts, GL_STATIC_DRAW);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
-      (void*)(2 * sizeof(float)));
 
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     std::cout << "Error: Incomplete frame buffer" << std::endl;
@@ -180,7 +89,6 @@ int main() {
   shader_pingpong.use();
   shader_pingpong.setInt("screenTexture", 0);
 
-
   // Controller setup
   std::map<int, ControllerData> controllers;
 
@@ -198,8 +106,7 @@ int main() {
   PlayerSystem playerSystem(&terrain, &controllers);
   ProjectileSystem projectileSystem(&terrain);
   PowerupSystem powerupSystem(&terrain, &playerSystem);
-  CameraSystem cameraSystem(playerSystem.getPlayers());
-  cameraSystem.setWindowDimensions(windowWidth, windowHeight);
+  CameraSystem cameraSystem(&w, playerSystem.getPlayers());
 
   PlayerRenderer playerRenderer(&playerSystem);
   TerrainRenderer terrainRenderer(&terrain);
@@ -213,7 +120,7 @@ int main() {
 
   EventManager::Send(Event::GAME_START);
 
-  while (!glfwWindowShouldClose(window)) {
+  while (!glfwWindowShouldClose(w.getWindow())) {
 
     double newTime = glfwGetTime();
     double frameTime = newTime - currentTime;
@@ -268,7 +175,7 @@ int main() {
     /////////
 
     // First pass
-    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, w.getFBO());
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -279,9 +186,9 @@ int main() {
 
     glBindBuffer(GL_UNIFORM_BUFFER, UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
-	glm::value_ptr(projection));
+        glm::value_ptr(projection));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
-	glm::value_ptr(view));
+        glm::value_ptr(view));
 
     terrainRenderer.draw();
     playerRenderer.draw();
@@ -293,26 +200,11 @@ int main() {
     // Do not need depth test in post
     glDisable(GL_DEPTH_TEST);
 
-    // Intermediate ping-pong buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, ppFBO[0]);
-    glBindTexture(GL_TEXTURE_2D, FBO_buffer);
-
-    shader_pingpong.use();
-    glBindVertexArray(screenVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
     // Final pass to screen
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glBindTexture(GL_TEXTURE_2D, ppFBO_buffer[0]);
-
     shader_post.use();
-    glBindVertexArray(screenVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindVertexArray(0);
+    w.render();
 
-    glfwSwapBuffers(window);
+    glfwSwapBuffers(w.getWindow());
     glfwPollEvents();
   }
 
