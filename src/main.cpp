@@ -1,6 +1,8 @@
 #include <iostream>
 #include <sstream>
+
 #include <set>
+#include <map>
 
 #include <glad/glad.h>	  // OpenGL bindings
 #include <GLFW/glfw3.h>	  // OpenGL helpers
@@ -8,8 +10,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "ControllerData.hpp"
+
 #include "ResourceManager.hpp"
-#include "Camera.hpp"
 #include "Terrain.hpp"
 #include "Player.hpp"
 
@@ -66,18 +69,6 @@ int main() {
 
   glfwGetWindowSize(window, &windowWidth, &windowHeight);
 
-  glm::mat4 projection = glm::ortho(
-      0.f, (float)windowWidth,
-      0.f, (float)windowHeight,
-      -1.f, 1.f
-      );
-
-  projection = glm::perspective(
-      glm::radians(80.f),
-      (float)windowWidth / (float)windowHeight,
-      0.01f, 10000.f
-      );
-
   // Initialize space in UBO
   unsigned int UBO;
   glGenBuffers(1, &UBO);
@@ -88,28 +79,27 @@ int main() {
 
   // Push initial matrices to UBO
   glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
-      glm::value_ptr(projection));
   glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
       glm::value_ptr(glm::mat4()));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-  
-  // FBO for first pass render (before post)
-  unsigned FBO;
-  glGenFramebuffers(1, &FBO);
-  glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+  // -----------------------------------
 
-  unsigned int FBO_texColorBuffer;
-  glGenTextures(1, &FBO_texColorBuffer);
-  glBindTexture(GL_TEXTURE_2D, FBO_texColorBuffer);
+  // Create FBO for initial render
+  unsigned int FBO;
+  unsigned int FBO_buffer;
+  glGenFramebuffers(1, &FBO);
+  glGenTextures(1, &FBO_buffer);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+  glBindTexture(GL_TEXTURE_2D, FBO_buffer);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight,
       0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-      FBO_texColorBuffer, 0);
-
+      FBO_buffer, 0);
+  // We require a depth buffer here
   unsigned int FBO_RBO;
   glGenRenderbuffers(1, &FBO_RBO);
   glBindRenderbuffer(GL_RENDERBUFFER, FBO_RBO);
@@ -119,6 +109,23 @@ int main() {
       GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, FBO_RBO);
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  // Create ping-pong FBOs for post
+  unsigned int ppFBO[2];
+  unsigned int ppFBO_buffer[2];
+  glGenFramebuffers(2, ppFBO);
+  glGenTextures(2, ppFBO_buffer);
+
+  for (unsigned int i = 0; i < 2; ++i) {
+    glBindFramebuffer(GL_FRAMEBUFFER, ppFBO[i]);
+    glBindTexture(GL_TEXTURE_2D, ppFBO_buffer[i]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight,
+	0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+	ppFBO_buffer[i], 0);
+  }
 
   float screenQuadVerts[] = { 
     // positions   // texCoords
@@ -162,23 +169,42 @@ int main() {
       "post"
       );
 
+  Shader shader_pingpong = ResourceManager::LoadShader(
+      "../assets/shaders/pingpong.vert", "../assets/shaders/pingpong.frag",
+      "pingpong"
+      );
+
   shader_post.use();
   shader_post.setInt("screenTexture", 0);
-  
-  Terrain terrain;
 
-  PlayerSystem playerSystem(&terrain);
+  shader_pingpong.use();
+  shader_pingpong.setInt("screenTexture", 0);
+
+
+  // Controller setup
+  std::map<int, ControllerData> controllers;
+
+  for (int i = 0; i <= GLFW_JOYSTICK_LAST; ++i) {
+    if (!glfwJoystickPresent(i)) continue;
+
+    // Dirty hack to ignore my laptop accelerometer
+    if (glfwGetJoystickName(i)[1] == 'T') continue;
+
+    controllers[i] = ControllerData();
+  }
+
+  // Module setup
+  Terrain terrain;
+  PlayerSystem playerSystem(&terrain, &controllers);
   ProjectileSystem projectileSystem(&terrain);
   PowerupSystem powerupSystem(&terrain, &playerSystem);
-  CameraSystem cameraSystem(&playerSystem);
+  CameraSystem cameraSystem(playerSystem.getPlayers());
   cameraSystem.setWindowDimensions(windowWidth, windowHeight);
 
   PlayerRenderer playerRenderer(&playerSystem);
   TerrainRenderer terrainRenderer(&terrain);
   ProjectileRenderer projectileRenderer(&projectileSystem);
   PowerupRenderer powerupRenderer(&powerupSystem);
-
-  std::set<int> buttonsDown;
 
   // Main loop
   const float dt = 1.f/60.f; // logic tickrate
@@ -201,36 +227,34 @@ int main() {
       // Player input
       //////////////////////////////////////////
 
-      int count;
-      int joy = GLFW_JOYSTICK_1;
+      for (auto& p : controllers) {
 
-      // DIRTY HACK:
-      // Stop my accelerometer from taking priority as the joystick
-      if (glfwGetJoystickName(joy)[0] == 'S')
-	joy = GLFW_JOYSTICK_2;
+	int count;
+	const unsigned char* buttons =
+	  glfwGetJoystickButtons(p.first, &count);
 
-      const unsigned char* buttons =
-	glfwGetJoystickButtons(joy, &count);
+	for (int i = 0; i < count; ++i) {
+	  bool buttonDown = (bool)buttons[i];
 
-      for (int i = 0; i < count; ++i) {
-	bool buttonDown = (bool)buttons[i];
+	  // Press event
+	  if (buttonDown && !p.second.buttons.count(i)) {
+	    p.second.buttons.insert(i);
+	    playerSystem.processInput(p.first, i, true);
+	  }
 
-	// Press event
-	if (buttonDown && !buttonsDown.count(i)) {
-	  buttonsDown.insert(i);
-	  playerSystem.processInput(0, i, true);
+	  // Release event
+	  else if (!buttonDown && p.second.buttons.count(i)) {
+	    p.second.buttons.erase(i);
+	    playerSystem.processInput(p.first, i, false);
+	  }
 	}
 
-	// Release event
-	else if (!buttonDown && buttonsDown.count(i)) {
-	  buttonsDown.erase(i);
-	  playerSystem.processInput(0, i, false);
-	}
+	const float* axes = glfwGetJoystickAxes(p.first, &count);
+	p.second.axes.assign(axes, axes + count);
       }
 
       // Tick update
-      const float* axes = glfwGetJoystickAxes(joy, &count);
-      playerSystem.update(dt, axes);
+      playerSystem.update(dt);
       projectileSystem.update(dt);
       powerupSystem.update(dt);
       terrain.update(currentTime, dt);
@@ -250,9 +274,12 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Camera
+    glm::mat4 projection = cameraSystem.getProjection();
     glm::mat4 view = cameraSystem.getView();
 
     glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
+	glm::value_ptr(projection));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
 	glm::value_ptr(view));
 
@@ -261,18 +288,28 @@ int main() {
     projectileRenderer.draw();
     powerupRenderer.draw();
 
-    // Post process pass
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // --------------------------------
+    // Finished rendering scene
+    // Do not need depth test in post
     glDisable(GL_DEPTH_TEST);
+
+    // Intermediate ping-pong buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, ppFBO[0]);
+    glBindTexture(GL_TEXTURE_2D, FBO_buffer);
+
+    shader_pingpong.use();
+    glBindVertexArray(screenVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // Final pass to screen
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glBindTexture(GL_TEXTURE_2D, ppFBO_buffer[0]);
 
     shader_post.use();
     glBindVertexArray(screenVAO);
-    glBindTexture(GL_TEXTURE_2D, FBO_texColorBuffer);
-
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBindVertexArray(0);
 
     glfwSwapBuffers(window);

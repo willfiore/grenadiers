@@ -74,8 +74,6 @@ void PowerupSystem::spawnPowerup()
   p.targetPosition.x = 600.f;
   p.targetPosition.y = terrain->getHeight(p.targetPosition.x);
 
-  std::cout << p.targetPosition.x << ", " << p.targetPosition.y << std::endl;
-  
   p.angle =
     Random::randomFloat(-glm::quarter_pi<float>(), glm::quarter_pi<float>());
 

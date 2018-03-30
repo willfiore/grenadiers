@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "ControllerData.hpp"
 
 #include "Player.hpp"
 #include "EventManager.hpp"
@@ -11,10 +12,10 @@ class ProjectileSystem;
 class PlayerSystem
 {
 public:
-  PlayerSystem(const Terrain*);
+  PlayerSystem(const Terrain*, const std::map<int, ControllerData>*);
 
-  void update(float dt, const float* axes);
-  void processInput(int playerID, int button, bool action);
+  void update(float dt);
+  void processInput(int controllerID, int button, bool action);
 
   void jump(Player&);
   void fireWeapon(Player&);
@@ -24,9 +25,9 @@ public:
 
 private:
   std::vector<Player> players;
-  const Terrain* terrain;
 
-  const float* axes;
+  const Terrain* terrain;
+  const std::map<int, ControllerData>* controllers;
 
   void onExplosion(Event);
   void onPowerupPickup(Event);

@@ -100,6 +100,7 @@ void Terrain::onExplosion(Event e)
   glm::vec2 position = boost::any_cast<glm::vec2>(e[0]);
   float radius = boost::any_cast<float>(e[1]);
 
+  // Deform terrain
   for (size_t i = 0; i < basePoints.size(); ++i) {
     glm::vec2& p = basePoints[i];
     
@@ -113,10 +114,11 @@ void Terrain::onExplosion(Event e)
      }
    }
 
+  // Wobble terrain
   addFunc([=](float x, float t) -> float {
 
       // Oscillate up and down over time
-      float r = 7.f * -glm::cos(20.f*t);
+      float r = 14.f * -glm::cos(20.f*t);
 
       // Fade out over time
       float dt = t - e.timestamp;

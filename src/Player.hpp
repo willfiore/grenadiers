@@ -31,6 +31,8 @@ struct Player {
   //////////////////////////////////////////////
 
   int id {-1};
+  int controllerID {-1};
+
   glm::vec2 position {0.f, 0.f};
   glm::vec2 velocity {0.f, 0.f};
   glm::vec2 acceleration {0.f, 0.f};

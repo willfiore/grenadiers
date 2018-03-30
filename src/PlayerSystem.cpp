@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include "Random.hpp"
 #include "Player.hpp"
 #include "Terrain.hpp"
 #include "Powerup.hpp"
@@ -11,16 +12,25 @@
 
 #include <iostream>
 
-PlayerSystem::PlayerSystem(const Terrain* t) :
-  terrain(t)
+PlayerSystem::PlayerSystem(const Terrain* t, const std::map<int, ControllerData>* c) :
+  terrain(t),
+  controllers(c)
 {
+  for (const auto& c : *controllers) {
+    Player player;
+    player.position.x = 2000.f + Random::randomFloat(0.f, 200.f);
+    player.weapons.insert(Weapon::GRENADE);
+    player.id = players.size();
+    player.controllerID = c.first;
+
+    players.push_back(player);
+  }
+  
+  // Create dummy player
   Player player;
-  player.position.x = 100.f;
-
-  player.weapons.insert(Weapon::GRENADE);
-
-  player.id = 0;
-
+  player.position.x = 2200.f;
+  player.id = players.size();
+  player.controllerID = -1;
   players.push_back(player);
 
   EventManager::Register(Event::EXPLOSION,
@@ -30,15 +40,23 @@ PlayerSystem::PlayerSystem(const Terrain* t) :
       std::bind(&PlayerSystem::onPowerupPickup, this, _1));
 }
 
-void PlayerSystem::update(float dt, const float* _a)
+void PlayerSystem::update(float dt)
 {
-  axes = _a;
-
   for (auto& p : players) {
 
     float terrainMaxWidth = terrain->getMaxWidth();
     float terrainHeight = terrain->getHeight(p.position.x);
     float terrainAngle = terrain->getAngle(p.position.x);
+
+    std::vector<float> axes(6, 0.0f);
+
+    if (p.controllerID != -1) {
+      axes = controllers->at(p.controllerID).axes;
+    }
+
+    // Aiming
+    ////////////////////////////////////////////////////
+    p.aimDirection = glm::atan(axes[1], axes[0]);
 
     // Movement
     ////////////////////////////////////////////////////
@@ -96,10 +114,10 @@ void PlayerSystem::update(float dt, const float* _a)
     // Stick to terrain for shallow angles
     if (!p.airborne && p.position.y > terrainHeight) {
       if(abs(terrainAngle) < Player::MAX_DOWNHILL_ANGLE) {
-        p.position.y = terrainHeight;
+	p.position.y = terrainHeight;
       }
       else {
-        p.airborne = true;
+	p.airborne = true;
       }
     }
 
@@ -110,7 +128,7 @@ void PlayerSystem::update(float dt, const float* _a)
     if (heightModifier < 0.f) heightModifier = 0.f;
     if (heightModifier > 1.f) heightModifier = 1.f;
 
-    float velocityModifier = p.velocity.y / Player::MAX_SPEED;
+    float velocityModifier = p.velocity.x / Player::MAX_SPEED;
     if (velocityModifier > 1.0f) velocityModifier = 1.0f;
 
     // Slightly tilt towards velocity direction
@@ -119,15 +137,17 @@ void PlayerSystem::update(float dt, const float* _a)
 
     p.angle += 12.f * dt * (goalAngle - p.angle);
 
-    // Aiming
-    ////////////////////////////////////////////////////
-    p.aimDirection = glm::atan(axes[1], axes[0]);
   }
 }
 
-void PlayerSystem::processInput(int playerID, int button, bool action)
+void PlayerSystem::processInput(int controllerID, int button, bool action)
 {
-  Player& player = players[playerID];
+  auto it = std::find_if(players.begin(), players.end(),
+      [controllerID](const Player& p) -> bool {
+      return p.controllerID == controllerID;
+      });
+
+  Player& player = *it;
 
   // Press
   if (action) {
