@@ -19,112 +19,70 @@ ProjectileSystem::ProjectileSystem(const Terrain* t) :
 
 void ProjectileSystem::update(float dt)
 {
-  updateGrenades(dt);
-  updateMissiles(dt);
-}
+  for (auto i = projectiles.begin(); i != projectiles.end();) {
+    Projectile& p = *i;
+    p.age += dt;
+    p.velocity += p.acceleration * dt;
+    p.position += p.velocity * dt;
 
-void ProjectileSystem::updateGrenades(float dt)
-{
-  for (auto i = grenades.begin(); i != grenades.end();) {
-    Grenade& g = *i;
+    // Check for terrain collision
+    float terrainHeight = terrain->getHeight(p.position.x);
+    if (p.position.y < terrainHeight) {
+      p.position.y = terrainHeight;
 
-    g.age += dt;
-
-    // Gravity
-    g.velocity.y -= 1000.f * dt;
-    g.position += g.velocity * dt;
-
-    // Terrain bounce
-    float terrainHeight = terrain->getHeight(g.position.x);
-
-    if (g.position.y < terrainHeight) {
-      g.position.y = terrainHeight;
-      float terrainAngle = terrain->getAngle(g.position.x);
-      float grenadeAngle = glm::atan(g.velocity.y, g.velocity.x);
-
-      float rotateAngle = 2 * (terrainAngle - grenadeAngle);
-
-      g.velocity = 0.5f * glm::rotate(g.velocity, rotateAngle);
-
+      // Bounce
+      float terrainAngle = terrain->getAngle(p.position.x);
+      float projectileAngle = glm::atan(p.velocity.y, p.velocity.x);
+      float rotateAngle = 2 * (terrainAngle - projectileAngle);
+      p.velocity = 0.5f * glm::rotate(p.velocity, rotateAngle);
     }
 
-    if (g.age > Grenade::LIFETIME) {
+    if (p.age > GRENADE_LIFETIME) {
       EvdExplosion d;
-      d.position = g.position;
-      d.radius = Grenade::EXPLOSION_RADIUS;
-      d.damage = 100.f;
+      d.position = p.position;
+      d.radius = GRENADE_EXPLOSION_RADIUS;
+      d.damage = GRENADE_MAX_DAMAGE;
       EventManager::Send(Event::EXPLOSION, d);
 
-      grenades.erase(i);
+      projectiles.erase(i);
       continue;
     }
+
     ++i;
   }
 }
 
-void ProjectileSystem::updateMissiles(float dt)
-{
-  for (auto i = missiles.begin(); i != missiles.end();) {
-    Missile& m = *i;
-
-    m.position += m.velocity * dt;
-
-    // Explode on terrain hit
-    if (m.position.y < terrain->getHeight(m.position.x)) {
-
-      EvdExplosion d;
-      d.position = m.position;
-      d.radius = Missile::EXPLOSION_RADIUS;
-      d.damage = 120.f;
-      EventManager::Send(Event::EXPLOSION, d);
-
-      missiles.erase(i);
-      continue;
-    }
-    ++i;
-
-  }
-}
-
-void ProjectileSystem::spawnGrenade(glm::vec2 p, glm::vec2 v)
-{
-  Grenade g;
-  g.position = p;
-  g.velocity = v;
-  g.age = 0.f;
-  grenades.push_back(g);
-}
-
-void ProjectileSystem::spawnMissile(glm::vec2 p, glm::vec2 v)
-{
-  Missile m;
-  m.position = p;
-  m.velocity = v;
-  missiles.push_back(m);
-}
 
 void ProjectileSystem::onPlayerFireWeapon(Event e)
 {
   auto d = boost::any_cast<EvdPlayerFireWeapon>(e.data);
 
   if (d.weapon == Weapon::GRENADE) {
-    float strength = 500.f;
+    Projectile& p = spawnProjectile(Projectile::GRENADE);
+    p.owner = d.player.id;
 
-    // Inherit player velocity
-    glm::vec2 velocity = d.player.velocity * 0.66f;
-    velocity.x += strength * glm::cos(d.player.aimDirection);
-    velocity.y += strength * -glm::sin(d.player.aimDirection);
-
-    spawnGrenade(d.player.position, velocity);
+    float strength = 600.f;
+    p.position = d.player.getCenterPosition();
+    p.velocity = d.player.velocity * 0.5f;
+    p.velocity.x += strength * glm::cos(d.player.aimDirection);
+    p.velocity.y += strength * -glm::sin(d.player.aimDirection);
+    p.acceleration = {0.f, -1000.f};
   }
 
   if (d.weapon == Weapon::MISSILE) {
+    Projectile& p = spawnProjectile(Projectile::MISSILE);
+    p.owner = d.player.id;
+
     float strength = 1500.f;
-
-    glm::vec2 velocity;
-    velocity.x += strength * glm::cos(d.player.aimDirection);
-    velocity.y += strength * -glm::sin(d.player.aimDirection);
-
-    spawnMissile(d.player.position, velocity);
+    p.position = d.player.getCenterPosition();
+    p.velocity.x += strength * glm::cos(d.player.aimDirection);
+    p.velocity.y += strength * -glm::sin(d.player.aimDirection);
   }
 }
+
+Projectile& ProjectileSystem::spawnProjectile(Projectile::Type type)
+{
+  projectiles.emplace_back(Projectile(type));
+  return projectiles.back();
+}
+

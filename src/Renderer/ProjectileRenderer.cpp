@@ -5,6 +5,7 @@
 
 #include "../ResourceManager.hpp"
 #include "../ProjectileSystem.hpp"
+#include <iostream>
 
 ProjectileRenderer::ProjectileRenderer(const ProjectileSystem* p) :
   projectileSystem(p)
@@ -41,20 +42,10 @@ void ProjectileRenderer::draw() const
   glBindVertexArray(VAO);
   shader.use();
 
-  for (auto& g : projectileSystem->getGrenades()) {
+  for (auto& p : projectileSystem->getProjectiles()) {
     glm::mat4 model = glm::mat4();
-    model = glm::translate(model, glm::vec3(g.position, 1.0));
-    model = glm::scale(model, glm::vec3(Grenade::SIZE, Grenade::SIZE, 1.f));
-
-    shader.setMat4("model", model);
-
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-  }
-
-  for (auto& m : projectileSystem->getMissiles()) {
-    glm::mat4 model = glm::mat4();
-    model = glm::translate(model, glm::vec3(m.position, 1.0));
-    model = glm::scale(model, glm::vec3(Grenade::SIZE, Grenade::SIZE, 1.f));
+    model = glm::translate(model, glm::vec3(p.position, 1.0));
+    model = glm::scale(model, glm::vec3(3.f, 3.f, 1.f));
 
     shader.setMat4("model", model);
 

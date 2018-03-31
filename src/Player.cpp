@@ -27,3 +27,8 @@ Player::Player()
   jumpAvailable = true;
   outOfControl = false;
 }
+
+glm::vec2 Player::getCenterPosition()
+{
+  return position + glm::vec2(0.f, Player::SIZE);
+}

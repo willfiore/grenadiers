@@ -47,7 +47,8 @@ int main() {
   ImGuiStyle* imguiStyle = &ImGui::GetStyle();
 
   imguiStyle->WindowRounding = 4.f;
-  imguiStyle->Colors[ImGuiCol_WindowBg] = ImVec4(0.4, 0.4, 0.4, 0.2);
+  imguiStyle->WindowTitleAlign = {0.5, 0.5};
+  imguiStyle->Colors[ImGuiCol_WindowBg] = {0.4, 0.4, 0.4, 0.2};
 
   // Initialize space in UBO
   unsigned int UBO;
@@ -130,7 +131,8 @@ int main() {
 
     ImGui_ImplGlfwGL3_NewFrame();
     ImGui::Begin("DEBUG");
-    ImGui::TextColored({1.0, 1.0, 0.0, 1.0}, "FPS: %2.f", ImGui::GetIO().Framerate);
+    ImGui::TextColored({1.0, 1.0, 0.0, 1.0}, "FPS: %2.f",
+	ImGui::GetIO().Framerate);
     ImGui::Text("----------");
 
     double newTime = glfwGetTime();

@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "Projectiles.hpp"
+#include "Projectile.hpp"
 #include "Event.hpp"
 
 class Terrain;
@@ -12,22 +12,13 @@ public:
   ProjectileSystem(const Terrain*);
 
   void update(float dt);
-
-  void updateGrenades(float dt);
-  void updateMissiles(float dt);
-
-  const std::vector<Grenade>& getGrenades() const { return grenades; }
-  const std::vector<Missile>& getMissiles() const { return missiles; }
-
-  void spawnGrenade(glm::vec2 p, glm::vec2 v);
-  void spawnMissile(glm::vec2 p, glm::vec2 v);
+  const std::vector<Projectile>& getProjectiles() const { return projectiles; }
 
 private:
 
   void onPlayerFireWeapon(Event);
+  Projectile& spawnProjectile(Projectile::Type);
 
-  std::vector<Grenade> grenades;
-  std::vector<Missile> missiles;
-
+  std::vector<Projectile> projectiles;
   const Terrain* terrain;
 };

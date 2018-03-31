@@ -1,0 +1,6 @@
+* code cleanup on projectile system
+
+linecast for collisions to prevent snapping
+start with player
+move on to projectiles
+see if its worth generalising the code?
