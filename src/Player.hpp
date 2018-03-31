@@ -21,11 +21,12 @@ struct Player {
   static constexpr float MAX_DOWNHILL_ANGLE = glm::radians(45.f);
   static constexpr float MAX_UPHILL_ANGLE = glm::radians(60.f);
   static constexpr float MIN_SIDEJUMP_ANGLE = glm::radians(20.f);
-  static constexpr float JUMP_VELOCITY = 1200.f;
+  static constexpr float JUMP_VELOCITY = 1000.f;
   static constexpr float SIZE = 10.f;
   static constexpr float INITIAL_ATTACK_STRENGTH = 60.f;
   static constexpr float MAX_ATTACK_STRENGTH = 150.f;
   static constexpr float ATTACK_STRENGTH_GROWTH = 4.f;
+  static constexpr float STARTING_HEALTH = 400.f;
 
   // State
   //////////////////////////////////////////////

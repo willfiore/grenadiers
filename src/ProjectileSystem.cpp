@@ -52,7 +52,7 @@ void ProjectileSystem::updateGrenades(float dt)
       EvdExplosion d;
       d.position = g.position;
       d.radius = Grenade::EXPLOSION_RADIUS;
-      d.damage = 60.f;
+      d.damage = 100.f;
       EventManager::Send(Event::EXPLOSION, d);
 
       grenades.erase(i);
@@ -75,7 +75,7 @@ void ProjectileSystem::updateMissiles(float dt)
       EvdExplosion d;
       d.position = m.position;
       d.radius = Missile::EXPLOSION_RADIUS;
-      d.damage = 80.f;
+      d.damage = 120.f;
       EventManager::Send(Event::EXPLOSION, d);
 
       missiles.erase(i);

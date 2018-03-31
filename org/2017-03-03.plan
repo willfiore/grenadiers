@@ -1,2 +1,5 @@
 * add a player for each controller
 * camera support for multiple players
+* restructured events to have single struct for data
+* added player health, explosion damage
+

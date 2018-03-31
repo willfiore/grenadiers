@@ -47,7 +47,7 @@ void main() {
   // Specular
   vec3 result = (ambient + diffuse) * vec3(1.0, 1.0, 1.0);
 
-  if (FragPos.z < -90.f || FragPos.z > 30.f)
+  if (FragPos.z < -30.f || FragPos.z > 30.f)
     result *= vec3(0.8);
 
   FragColor = vec4(result, 1.0);

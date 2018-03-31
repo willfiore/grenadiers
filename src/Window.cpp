@@ -14,20 +14,19 @@ void glfw_key_callback(GLFWwindow* window,
 }
 
 Window::Window() :
-  width(960),
-  height(540)
+  width(1366),
+  height(768)
 {
   name = "Platformer";
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwSwapInterval(1);
 
   window = glfwCreateWindow(
       width, height,
       name.c_str(),
-      NULL,
+      glfwGetPrimaryMonitor(),
       NULL
       );
 

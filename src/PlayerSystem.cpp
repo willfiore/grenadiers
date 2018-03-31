@@ -8,6 +8,8 @@
 #include "Powerup.hpp"
 #include "Joystick.hpp"
 
+#include "imgui.h"
+
 #include <glm/gtc/constants.hpp>
 
 #include <iostream>
@@ -44,7 +46,13 @@ PlayerSystem::PlayerSystem(
 
 void PlayerSystem::update(float dt)
 {
+  ImGui::Text("Player health:");
   for (auto& p : players) {
+    ImGui::Text("[%i]", p.id);
+    ImGui::SameLine();
+    ImGui::TextColored({
+	2-p.health/(0.5f * Player::STARTING_HEALTH),
+	p.health/(0.5f * Player::STARTING_HEALTH), 0.0, 1.0}, "%2f", p.health);
 
     float terrainMaxWidth = terrain->getMaxWidth();
     float terrainHeight = terrain->getHeight(p.position.x);
@@ -230,7 +238,6 @@ void PlayerSystem::onExplosion(Event e)
       damage = 0.1 * d.damage;
 
     p.health -= damage;
-    std::cout << damage << std::endl;
 
     p.airborne = true;
     p.outOfControl = true;

@@ -21,7 +21,7 @@ Player::Player()
   aimDirection = 0.f;
 
   // Init state
-  health = 200;
+  health = STARTING_HEALTH;
 
   airborne = false;
   jumpAvailable = true;

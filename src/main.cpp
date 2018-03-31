@@ -7,6 +7,9 @@
 #include <glad/glad.h>	  // OpenGL bindings
 #include <GLFW/glfw3.h>	  // OpenGL helpers
 
+#include "imgui.h"
+#include "imgui_impl_glfw_gl3.h"
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -38,9 +41,13 @@ int main() {
   Window w;
   glEnable(GL_DEPTH_TEST);
 
-  ////////////////////////////////////////////////
-  // Projection and camera transformation matrices
-  ////////////////////////////////////////////////
+  // ImGui
+  ImGui::CreateContext();
+  ImGui_ImplGlfwGL3_Init(w.getWindow(), true);
+  ImGuiStyle* imguiStyle = &ImGui::GetStyle();
+
+  imguiStyle->WindowRounding = 4.f;
+  imguiStyle->Colors[ImGuiCol_WindowBg] = ImVec4(0.4, 0.4, 0.4, 0.2);
 
   // Initialize space in UBO
   unsigned int UBO;
@@ -121,13 +128,19 @@ int main() {
 
   while (!glfwWindowShouldClose(w.getWindow())) {
 
+    ImGui_ImplGlfwGL3_NewFrame();
+    ImGui::Begin("DEBUG");
+    ImGui::TextColored({1.0, 1.0, 0.0, 1.0}, "FPS: %2.f", ImGui::GetIO().Framerate);
+    ImGui::Text("----------");
+
     double newTime = glfwGetTime();
     double frameTime = newTime - currentTime;
     currentTime = newTime;
     accumulator += frameTime;
 
     // Logic tick
-    while (accumulator >= dt) {
+    // WARNING: "if" rather than "while" can cause spiral of death
+    if (accumulator >= dt) {
       accumulator -= dt;
 
       // Player input
@@ -194,6 +207,7 @@ int main() {
     projectileRenderer.draw();
     powerupRenderer.draw();
 
+
     // --------------------------------
     // Finished rendering scene
     // Do not need depth test in post
@@ -203,10 +217,18 @@ int main() {
     shader_post.use();
     w.render();
 
+    ImGui::End();
+    ImGui::Render();
+    ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+
     glfwSwapBuffers(w.getWindow());
     glfwPollEvents();
   }
 
+  // Cleanup
+  ImGui_ImplGlfwGL3_Shutdown();
+  ImGui::DestroyContext();
   glfwTerminate();
+
   return 0;
 }
