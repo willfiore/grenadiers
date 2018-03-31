@@ -24,4 +24,6 @@ struct Projectile
   glm::vec2 position;
   glm::vec2 velocity;
   glm::vec2 acceleration;
+
+  bool dirty_justBounced;
 };

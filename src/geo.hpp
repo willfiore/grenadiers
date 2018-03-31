@@ -15,4 +15,6 @@ namespace geo {
   bool ccw(glm::vec2, glm::vec2, glm::vec2);
   bool hasIntersection(glm::vec2, glm::vec2, glm::vec2, glm::vec2);
   std::pair<bool, glm::vec2> intersect(glm::vec2, glm::vec2, glm::vec2, glm::vec2);
+
+  float cross(glm::vec2, glm::vec2);
 }

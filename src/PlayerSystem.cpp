@@ -155,7 +155,7 @@ void PlayerSystem::update(float dt)
     float goalAngle = terrainAngle;
 
     float terrainHeight = terrain->getHeight(p.position.x);
-    float heightModifier = (p.position.y - terrainHeight) / 100.f;
+    float heightModifier = (p.position.y - terrainHeight) / 220.f;
     if (heightModifier < 0.f) heightModifier = 0.f;
     if (heightModifier > 1.f) heightModifier = 1.f;
 

@@ -22,18 +22,18 @@ std::pair<bool, glm::vec2> geo::intersect(glm::vec2 a1, glm::vec2 a2,
 {
   std::pair<bool, glm::vec2> ret = std::make_pair(false, glm::vec2());
 
-  glm::vec3 p = {a1, 0.f};
-  glm::vec3 q = {b1, 0.f};
-  glm::vec3 r = {a2 - a1, 0.f};
-  glm::vec3 s = {b2 - b1, 0.f};
+  glm::vec2 p = a1;
+  glm::vec2 q = b1;
+  glm::vec2 r = a2 - a1;
+  glm::vec2 s = b2 - b1;
 
-  float rxs = glm::cross(r, s).z;
+  float rxs = geo::cross(r, s);
 
   // Parallel
   if (rxs == 0.f) return ret;
 
-  float t = glm::cross(q-p, s).z / rxs;
-  float u = glm::cross(q-p, r).z / rxs;
+  float t = geo::cross(q-p, s) / rxs;
+  float u = geo::cross(q-p, r) / rxs;
 
   // Intersection
   if (t >= 0 && t <= 1 &&
@@ -43,4 +43,11 @@ std::pair<bool, glm::vec2> geo::intersect(glm::vec2 a1, glm::vec2 a2,
   }
 
   return ret;
+}
+
+float geo::cross(glm::vec2 a, glm::vec2 b)
+{
+  glm::vec3 a3 = glm::vec3(a, 0.f);
+  glm::vec3 b3 = glm::vec3(b, 0.f);
+  return glm::cross(a3, b3).z;
 }

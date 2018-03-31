@@ -5,6 +5,7 @@
 #include <glm/gtc/constants.hpp>
 
 #include <iostream>
+#include "imgui.h"
 
 #include "Terrain.hpp"
 #include "EventManager.hpp"
@@ -23,19 +24,56 @@ void ProjectileSystem::update(float dt)
     Projectile& p = *i;
     p.age += dt;
     p.velocity += p.acceleration * dt;
-    p.position += p.velocity * dt;
+    glm::vec2 newPosition = p.position + p.velocity * dt;
+
+    if (!p.dirty_justBounced) {
+      std::vector<LineSegment> tSegments =
+	terrain->getSegmentsInRange(p.position.x, newPosition.x);
+
+      bool foundIntersection = false;
+      for (auto& s : tSegments) {
+
+	auto intersection =
+	  geo::intersect(s.first, s.second, p.position, newPosition);
+
+	if (intersection.first) {
+	  foundIntersection = true;
+	  p.dirty_justBounced = true;
+
+	  newPosition = intersection.second;
+	  float terrainAngle = terrain->getAngle(p.position.x);
+	  float projectileAngle = glm::atan(p.velocity.y, p.velocity.x);
+	  float rotateAngle = 2 * (terrainAngle - projectileAngle);
+	  p.velocity = 0.5f * glm::rotate(p.velocity, rotateAngle);
+	  break;
+	}
+      }
+
+      // Failsafe
+      if (!foundIntersection && newPosition.y < terrain->getHeight(newPosition.x)) {
+	newPosition.y = terrain->getHeight(newPosition.x);
+	float terrainAngle = terrain->getAngle(p.position.x);
+	float projectileAngle = glm::atan(p.velocity.y, p.velocity.x);
+	float rotateAngle = 2 * (terrainAngle - projectileAngle);
+	p.velocity = 0.5f * glm::rotate(p.velocity, rotateAngle);
+      }
+    } else {
+      p.dirty_justBounced = false;
+    }
+
+    p.position = newPosition;
 
     // Check for terrain collision
-    float terrainHeight = terrain->getHeight(p.position.x);
-    if (p.position.y < terrainHeight) {
-      p.position.y = terrainHeight;
+    // float terrainHeight = terrain->getHeight(p.position.x);
+    // if (p.position.y < terrainHeight) {
+    //   p.position.y = terrainHeight;
 
-      // Bounce
-      float terrainAngle = terrain->getAngle(p.position.x);
-      float projectileAngle = glm::atan(p.velocity.y, p.velocity.x);
-      float rotateAngle = 2 * (terrainAngle - projectileAngle);
-      p.velocity = 0.5f * glm::rotate(p.velocity, rotateAngle);
-    }
+    //   // Bounce
+    //   float terrainAngle = terrain->getAngle(p.position.x);
+    //   float projectileAngle = glm::atan(p.velocity.y, p.velocity.x);
+    //   float rotateAngle = 2 * (terrainAngle - projectileAngle);
+    //   p.velocity = 0.5f * glm::rotate(p.velocity, rotateAngle);
+    // }
 
     if (p.age > GRENADE_LIFETIME) {
       EvdExplosion d;
