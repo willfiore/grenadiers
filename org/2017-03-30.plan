@@ -2,4 +2,7 @@
 * camera support for multiple players
 * restructured events to have single struct for data
 * added player health, explosion damage
+* added debug ui showing health
 
+single grenade at a time, tap to detonate early
+integrate sub dt to fix numerous physics issues
