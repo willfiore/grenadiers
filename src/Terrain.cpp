@@ -63,6 +63,34 @@ float Terrain::getAngle(float x) const
   return 0.f;
 }
 
+std::vector<LineSegment> Terrain::getSegmentsInRange(float x1, float x2) const
+{
+  std::vector<LineSegment> ret;
+
+  bool reverse = false;
+  if (x1 > x2) {
+    reverse = true;
+    float t = x1;
+    x1 = x2;
+    x2 = t;
+  }
+
+  for (size_t i = 1; i < points.size(); ++i) {
+    glm::vec2 a = points[i-1];
+    glm::vec2 b = points[i];
+
+    if ((x1 > a.x && x1 < b.x) ||
+	(x2 > a.x && x2 < b.x)) {
+	ret.push_back({a, b});
+	}
+  }
+
+  if (reverse)
+    std::reverse(ret.begin(), ret.end());
+
+  return ret;
+}
+
 void Terrain::update(float t, float dt) {
   points = basePoints;
 

@@ -3,6 +3,7 @@
 #include <vector>
 #include <functional>
 #include <glm/vec2.hpp>
+#include "geo.hpp"
 
 #include "Event.hpp"
 
@@ -24,6 +25,8 @@ public:
 
   float getHeight(float x) const;
   float getAngle(float x) const;
+
+  std::vector<LineSegment> getSegmentsInRange(float x1, float  x2) const;
 
   const std::vector<glm::vec2>& getPoints() const { return points; }
 

@@ -49,4 +49,7 @@ struct Player {
   bool airborne;
   bool jumpAvailable;
   bool outOfControl;
+
+  // Dirty flags
+  bool dirty_justLeftGround;
 };

@@ -7,8 +7,10 @@
 #include "Terrain.hpp"
 #include "Powerup.hpp"
 #include "Joystick.hpp"
+#include "geo.hpp"
 
 #include "imgui.h"
+#include <sstream>
 
 #include <glm/gtc/constants.hpp>
 
@@ -46,17 +48,7 @@ PlayerSystem::PlayerSystem(
 
 void PlayerSystem::update(float dt)
 {
-  ImGui::Text("Player health:");
   for (auto& p : players) {
-    ImGui::Text("[%i]", p.id);
-    ImGui::SameLine();
-    ImGui::TextColored({
-	2-p.health/(0.5f * Player::STARTING_HEALTH),
-	p.health/(0.5f * Player::STARTING_HEALTH), 0.0, 1.0}, "%2f", p.health);
-
-    float terrainMaxWidth = terrain->getMaxWidth();
-    float terrainHeight = terrain->getHeight(p.position.x);
-    float terrainAngle = terrain->getAngle(p.position.x);
 
     std::vector<float> axes(6, 0.0f);
 
@@ -89,52 +81,81 @@ void PlayerSystem::update(float dt)
     p.acceleration.x -= accel_factor / Player::MAX_SPEED * p.velocity.x;
 
     // Gravity
-    p.acceleration.y = Player::ACCEL_Y;
+    if (p.airborne) {
+      p.acceleration.y = Player::ACCEL_Y;
+    }
 
     // -------- Velocity --------
     p.velocity += p.acceleration * dt;
+    glm::vec2 maxNewPosition = p.position + p.velocity * dt;
 
-    // Reduce velocity uphill
+    float terrainAngle = terrain->getAngle(maxNewPosition.x);
     if (!p.airborne &&
 	glm::sign(terrainAngle) == glm::sign(p.velocity.x)) {
       p.velocity *= glm::cos(terrainAngle);
     }
 
     // -------- Position --------
-    p.position += p.velocity * dt;
+    glm::vec2 newPosition = p.position + p.velocity * dt;
 
+    if (!p.airborne) {
+      if (abs(terrainAngle) > Player::MAX_DOWNHILL_ANGLE &&
+	  glm::sign(p.velocity.x) != glm::sign(terrainAngle)) {
+	p.dirty_justLeftGround = true;
+	p.airborne = true;
+      }
+      else {
+	p.position = newPosition;
+	p.position.y = terrain->getHeight(newPosition.x);
+      }
+    }
+
+    if (p.airborne) {
+      if (!p.dirty_justLeftGround) {
+	std::vector<LineSegment> tSegments =
+	  terrain->getSegmentsInRange(p.position.x, newPosition.x);
+
+	bool foundIntersection = false;
+	for (auto& s : tSegments) {
+
+	  auto intersection =
+	    geo::intersect(s.first, s.second, p.position, newPosition);
+
+	  if (intersection.first) {
+	    foundIntersection = true;
+
+	    newPosition = intersection.second;
+	    p.acceleration.y = 0.f;
+	    p.velocity.y = 0.f;
+	    p.airborne = false;
+	    p.outOfControl = false;
+	    p.jumpAvailable = true;
+	    break;
+	  }
+	}
+
+	// Failsafe
+	if (!foundIntersection && newPosition.y < terrain->getHeight(newPosition.x))
+	  newPosition.y = terrain->getHeight(newPosition.x);
+      } else {
+	p.dirty_justLeftGround = false;
+      }
+
+      p.position = newPosition;
+    }
+
+    // World boundary
+    float terrainMaxWidth = terrain->getMaxWidth();
     if (p.position.x - Player::SIZE < 0)
       p.position.x = Player::SIZE;
     else if (p.position.x + Player::SIZE > terrainMaxWidth)
       p.position.x = terrainMaxWidth - Player::SIZE;
 
-    // Terrain collision
-    if (p.position.y < terrainHeight) {
-      // Movement
-      p.acceleration.y = 0.f;
-      p.velocity.y = 0.f;
-      p.position.y = terrainHeight;
-
-      // Flags
-      p.airborne = false;
-      p.outOfControl = false;
-      p.jumpAvailable = true;
-    }
-
-    // Stick to terrain for shallow angles
-    if (!p.airborne && p.position.y > terrainHeight) {
-      if(abs(terrainAngle) < Player::MAX_DOWNHILL_ANGLE) {
-	p.position.y = terrainHeight;
-      }
-      else {
-	p.airborne = true;
-      }
-    }
-
     // -------- Angle --------
     float goalAngle = terrainAngle;
 
-    float heightModifier = (p.position.y - terrainHeight) / 170.f;
+    float terrainHeight = terrain->getHeight(p.position.x);
+    float heightModifier = (p.position.y - terrainHeight) / 100.f;
     if (heightModifier < 0.f) heightModifier = 0.f;
     if (heightModifier > 1.f) heightModifier = 1.f;
 
@@ -145,9 +166,24 @@ void PlayerSystem::update(float dt)
     goalAngle += heightModifier *
       (-glm::radians(15.f) * velocityModifier - goalAngle);
 
-    p.angle += 12.f * dt * (goalAngle - p.angle);
+    p.angle += 14.f * dt * (goalAngle - p.angle);
 
   }
+
+  ImGui::Begin("Players", NULL, ImGuiWindowFlags_NoCollapse);
+  for (auto& p : players) {
+    std::stringstream header_label;
+    header_label << "Player " << p.id; 
+
+    if(ImGui::CollapsingHeader(header_label.str().c_str(),
+	  ImGuiTreeNodeFlags_DefaultOpen)) {
+      ImGui::Text("Health: %2.f", p.health);
+      ImGui::Text("Airborne: %d", p.airborne);
+      ImGui::Text("Jump available: %d", p.jumpAvailable);
+      ImGui::Text("Out of control: %d", p.outOfControl);
+    }
+  }
+  ImGui::End();
 }
 
 void PlayerSystem::processInput(int controllerID, int button, bool action)
@@ -190,6 +226,7 @@ void PlayerSystem::jump(Player& p)
   if (abs(terrainAngle) > Player::MIN_SIDEJUMP_ANGLE) {
     p.velocity.x += 0.4f * Player::JUMP_VELOCITY * -glm::sin(terrainAngle); 
   }
+  p.dirty_justLeftGround = true;
   p.airborne = true;
   p.jumpAvailable = false;
 }
@@ -240,6 +277,7 @@ void PlayerSystem::onExplosion(Event e)
     p.health -= damage;
 
     p.airborne = true;
+    p.dirty_justLeftGround = true;
     p.outOfControl = true;
 
     glm::vec2 launchVelocity;

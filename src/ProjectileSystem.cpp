@@ -63,7 +63,7 @@ void ProjectileSystem::onPlayerFireWeapon(Event e)
 
     float strength = 600.f;
     p.position = d.player.getCenterPosition();
-    p.velocity = d.player.velocity * 0.5f;
+    p.velocity = 0.33f * d.player.velocity;
     p.velocity.x += strength * glm::cos(d.player.aimDirection);
     p.velocity.y += strength * -glm::sin(d.player.aimDirection);
     p.acceleration = {0.f, -1000.f};

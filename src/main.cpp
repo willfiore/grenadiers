@@ -130,10 +130,6 @@ int main() {
   while (!glfwWindowShouldClose(w.getWindow())) {
 
     ImGui_ImplGlfwGL3_NewFrame();
-    ImGui::Begin("DEBUG");
-    ImGui::TextColored({1.0, 1.0, 0.0, 1.0}, "FPS: %2.f",
-	ImGui::GetIO().Framerate);
-    ImGui::Text("----------");
 
     double newTime = glfwGetTime();
     double frameTime = newTime - currentTime;
@@ -219,7 +215,6 @@ int main() {
     shader_post.use();
     w.render();
 
-    ImGui::End();
     ImGui::Render();
     ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
