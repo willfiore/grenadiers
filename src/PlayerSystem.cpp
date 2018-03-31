@@ -10,7 +10,7 @@
 #include "geo.hpp"
 
 #include "imgui.h"
-#include <sstream>
+#include "Console.hpp"
 
 #include <glm/gtc/constants.hpp>
 
@@ -202,6 +202,8 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
 	jump(player); break;
       case JOY_BUTTON_RB:
 	fireWeapon(player); break;
+      case JOY_BUTTON_LB:
+	secondaryFireWeapon(player); break;
       case JOY_BUTTON_Y:
 	cycleWeapon(player); break;
       default: break;
@@ -231,8 +233,6 @@ void PlayerSystem::jump(Player& p)
   p.jumpAvailable = false;
 }
 
-
-
 void PlayerSystem::fireWeapon(Player& p)
 {
   // Can't fire if they have no weapons!
@@ -244,6 +244,10 @@ void PlayerSystem::fireWeapon(Player& p)
   d.player = p;
   d.weapon = currentWeapon;
   EventManager::Send(Event::PLAYER_FIRE_WEAPON, d);
+}
+
+void PlayerSystem::secondaryFireWeapon(Player& p)
+{
 }
 
 void PlayerSystem::cycleWeapon(Player& p)

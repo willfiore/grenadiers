@@ -15,6 +15,7 @@
 
 #include "ControllerData.hpp"
 
+#include "Console.hpp"
 #include "Window.hpp"
 #include "ResourceManager.hpp"
 #include "Terrain.hpp"
@@ -48,7 +49,10 @@ int main() {
 
   imguiStyle->WindowRounding = 4.f;
   imguiStyle->WindowTitleAlign = {0.5, 0.5};
-  imguiStyle->Colors[ImGuiCol_WindowBg] = {0.4, 0.4, 0.4, 0.2};
+  imguiStyle->Colors[ImGuiCol_WindowBg] = {0.1, 0.1, 0.1, 0.9};
+  imguiStyle->Colors[ImGuiCol_TitleBg] = {0.3, 0.3, 0.3, 0.9};
+  imguiStyle->Colors[ImGuiCol_TitleBgActive] = {0.3, 0.3, 0.3, 0.9};
+  imguiStyle->Colors[ImGuiCol_Header] = {0.3, 0.3, 0.3, 0.9};
 
   // Initialize space in UBO
   unsigned int UBO;
@@ -130,6 +134,8 @@ int main() {
   while (!glfwWindowShouldClose(w.getWindow())) {
 
     ImGui_ImplGlfwGL3_NewFrame();
+
+    Console::render();
 
     double newTime = glfwGetTime();
     double frameTime = newTime - currentTime;

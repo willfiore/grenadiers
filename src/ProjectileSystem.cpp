@@ -90,7 +90,6 @@ void ProjectileSystem::update(float dt)
   }
 }
 
-
 void ProjectileSystem::onPlayerFireWeapon(Event e)
 {
   auto d = boost::any_cast<EvdPlayerFireWeapon>(e.data);
