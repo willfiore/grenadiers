@@ -17,6 +17,8 @@ public:
 private:
 
   void onPlayerFireWeapon(Event);
+  void onPlayerSecondaryFireWeapon(Event);
+
   Projectile& spawnProjectile(Projectile::Type);
 
   std::vector<Projectile> projectiles;

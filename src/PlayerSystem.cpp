@@ -248,6 +248,15 @@ void PlayerSystem::fireWeapon(Player& p)
 
 void PlayerSystem::secondaryFireWeapon(Player& p)
 {
+  // Can't fire if they have no weapons!
+  if (p.weapons.size() == 0) return;
+
+  Weapon currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
+
+  EvdPlayerSecondaryFireWeapon d;
+  d.player = p;
+  d.weapon = currentWeapon;
+  EventManager::Send(Event::PLAYER_SECONDARY_FIRE_WEAPON, d);
 }
 
 void PlayerSystem::cycleWeapon(Player& p)
@@ -286,14 +295,14 @@ void PlayerSystem::onExplosion(Event e)
 
     glm::vec2 launchVelocity;
 
-    launchVelocity.x = 1500.f * glm::pow( (d.radius-dist)/d.radius, 0.5);
+    launchVelocity.x = d.knockback * glm::pow( (d.radius-dist)/d.radius, 0.5);
     launchVelocity.x *= glm::sign(diff.x);
 
-    launchVelocity.y = 1500.f * glm::pow( (d.radius-dist)/d.radius, 0.5);
+    launchVelocity.y = d.knockback * glm::pow( (d.radius-dist)/d.radius, 0.5);
 
     // If we are very close in x, launch more upwards
     if (glm::abs(diff.x) < 1.5f * Player::SIZE) {
-      launchVelocity.x *= 0.2f;
+      launchVelocity.x *= 0.8f;
       launchVelocity.y *= 1.5f;
     }
 

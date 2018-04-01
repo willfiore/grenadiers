@@ -4,8 +4,8 @@
 #include <glm/trigonometric.hpp>
 #include <glm/gtc/constants.hpp>
 
-#include <iostream>
 #include "imgui.h"
+#include "Console.hpp"
 
 #include "Terrain.hpp"
 #include "EventManager.hpp"
@@ -16,6 +16,9 @@ ProjectileSystem::ProjectileSystem(const Terrain* t) :
 {
   EventManager::Register(Event::PLAYER_FIRE_WEAPON,
       std::bind(&ProjectileSystem::onPlayerFireWeapon, this, _1));
+
+  EventManager::Register(Event::PLAYER_SECONDARY_FIRE_WEAPON,
+      std::bind(&ProjectileSystem::onPlayerSecondaryFireWeapon, this, _1));
 }
 
 void ProjectileSystem::update(float dt)
@@ -63,18 +66,6 @@ void ProjectileSystem::update(float dt)
 
     p.position = newPosition;
 
-    // Check for terrain collision
-    // float terrainHeight = terrain->getHeight(p.position.x);
-    // if (p.position.y < terrainHeight) {
-    //   p.position.y = terrainHeight;
-
-    //   // Bounce
-    //   float terrainAngle = terrain->getAngle(p.position.x);
-    //   float projectileAngle = glm::atan(p.velocity.y, p.velocity.x);
-    //   float rotateAngle = 2 * (terrainAngle - projectileAngle);
-    //   p.velocity = 0.5f * glm::rotate(p.velocity, rotateAngle);
-    // }
-
     if (p.age > GRENADE_LIFETIME) {
       EvdExplosion d;
       d.position = p.position;
@@ -114,6 +105,27 @@ void ProjectileSystem::onPlayerFireWeapon(Event e)
     p.position = d.player.getCenterPosition();
     p.velocity.x += strength * glm::cos(d.player.aimDirection);
     p.velocity.y += strength * -glm::sin(d.player.aimDirection);
+  }
+}
+
+void ProjectileSystem::onPlayerSecondaryFireWeapon(Event e)
+{
+  auto d = boost::any_cast<EvdPlayerSecondaryFireWeapon>(e.data);
+
+  for (auto it = projectiles.begin(); it != projectiles.end();) {
+    const Projectile& p = *it;
+
+    if (p.owner == d.player.id) {
+      EvdExplosion d;
+      d.position = p.position;
+      d.radius = 0.7f * GRENADE_EXPLOSION_RADIUS;
+      d.damage = 0.5f * GRENADE_MAX_DAMAGE;
+      EventManager::Send(Event::EXPLOSION, d);
+
+      projectiles.erase(it);
+      continue;
+    }
+    ++it;
   }
 }
 

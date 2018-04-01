@@ -66,7 +66,9 @@ void Console::render()
 	  }
 	}
       }
-      e = e.substr(found+3, std::string::npos);
+      if (found != std::string::npos) {
+	e = e.substr(found+3, std::string::npos);
+      }
       first = false;
     }
   }
