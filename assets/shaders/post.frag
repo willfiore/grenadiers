@@ -8,5 +8,4 @@ void main()
 {
   vec4 col = texture(screenTexture, TexCoords);
   FragColor = col;
-
 }

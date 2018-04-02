@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "EventManager.hpp"
+#include "ResourceManager.hpp"
 
 void glfw_key_callback(GLFWwindow* window,
     int key, int scancode, int action, int mods)
@@ -32,6 +33,7 @@ Window::Window() :
 
   glfwMakeContextCurrent(window);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+  glfwSwapInterval(1.0);
 
   // Init GLAD
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -39,14 +41,9 @@ Window::Window() :
   // Callbacks
   glfwSetKeyCallback(window, glfw_key_callback);
 
-  generateFBO();
-}
-
-void Window::generateFBO()
-{
+  // Generate pre-post MSAA FBO
   glGenFramebuffers(1, &FBO);
   glGenTextures(1, &FBO_buffer);
-
   glBindFramebuffer(GL_FRAMEBUFFER, FBO);
   glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, FBO_buffer);
   glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisamples,
@@ -54,8 +51,7 @@ void Window::generateFBO()
   glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
       GL_TEXTURE_2D_MULTISAMPLE, FBO_buffer, 0);
-
-  // We require a depth buffer here
+  // Generate depth buffer
   unsigned int FBO_RBO;
   glGenRenderbuffers(1, &FBO_RBO);
   glBindRenderbuffer(GL_RENDERBUFFER, FBO_RBO);
@@ -67,16 +63,18 @@ void Window::generateFBO()
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // Post processing downsampled framebuffers
-  glGenFramebuffers(1, &PFBO);
-  glGenTextures(1, &PFBO_buffer);
-  glBindFramebuffer(GL_FRAMEBUFFER, PFBO);
-  glBindTexture(GL_TEXTURE_2D, PFBO_buffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
-      GL_RGB, GL_UNSIGNED_BYTE, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-      GL_TEXTURE_2D, PFBO_buffer, 0);
+  glGenFramebuffers(2, PFBO);
+  glGenTextures(2, PFBO_buffer);
+  for (int i = 0; i < 2; ++i) {
+    glBindFramebuffer(GL_FRAMEBUFFER, PFBO[i]);
+    glBindTexture(GL_TEXTURE_2D, PFBO_buffer[i]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
+	GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+	GL_TEXTURE_2D, PFBO_buffer[i], 0);
+  }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   float screenQuadVerts[] = { 
@@ -89,9 +87,6 @@ void Window::generateFBO()
     1.0f, -1.0f,  1.0f, 0.0f,
     1.0f,  1.0f,  1.0f, 1.0f
   };
-
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
 
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
@@ -106,10 +101,18 @@ void Window::generateFBO()
       (void*)(2 * sizeof(float)));
 }
 
+void Window::initShaders()
+{
+  // Set up shaders
+  shader_post = ResourceManager::GetShader("post");
+  shader_post.use();
+  shader_post.setInt("screenTexture", 0);
+}
+
 void Window::render()
 {
   glBindFramebuffer(GL_READ_FRAMEBUFFER, FBO);
-  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, PFBO);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, PFBO[0]);
 
   glBlitFramebuffer(0, 0, width, height, 0, 0, width, height,
       GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -118,9 +121,11 @@ void Window::render()
   glDisable(GL_DEPTH_TEST);
   glClear(GL_COLOR_BUFFER_BIT);
 
+  shader_post.use();
+
   glBindVertexArray(VAO);
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, PFBO_buffer);
+  glBindTexture(GL_TEXTURE_2D, PFBO_buffer[0]);
   glDrawArrays(GL_TRIANGLES, 0, 6);
   glBindVertexArray(0);
 }

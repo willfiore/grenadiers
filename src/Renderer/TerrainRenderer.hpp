@@ -14,6 +14,9 @@ private:
   const Terrain* terrain;
   float depth;
 
+  GLuint VAO;
   GLuint VBO;
   std::vector<glm::vec2> verts;
+
+  Shader shader;
 };

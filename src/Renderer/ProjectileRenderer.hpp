@@ -11,4 +11,5 @@ public:
 
 private:
   const ProjectileSystem* projectileSystem;
+  Shader shader;
 };

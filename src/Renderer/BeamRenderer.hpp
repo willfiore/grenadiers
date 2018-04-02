@@ -1,17 +1,14 @@
 #pragma once
 
-#include <vector>
-
 #include "BaseRenderer.hpp"
 
 class PlayerSystem;
-struct Player;
 
-class PlayerRenderer : public BaseRenderer
-{
+class BeamRenderer : public BaseRenderer {
 public:
-  PlayerRenderer(const PlayerSystem*);
+  BeamRenderer(const PlayerSystem*);
   virtual void draw() const override;
+
 private:
   const PlayerSystem* playerSystem;
   Shader shader;

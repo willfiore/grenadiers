@@ -23,9 +23,11 @@ Player::Player()
   // Init state
   health = STARTING_HEALTH;
 
+  alive = true;
   airborne = false;
   jumpAvailable = true;
   outOfControl = false;
+  firingBeam = false;
 }
 
 glm::vec2 Player::getCenterPosition()

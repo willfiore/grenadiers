@@ -11,4 +11,5 @@ public:
 
 private:
   const PowerupSystem* powerupSystem;
+  Shader shader;
 };

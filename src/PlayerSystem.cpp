@@ -25,7 +25,12 @@ PlayerSystem::PlayerSystem(
   for (const auto& c : *controllers) {
     Player player;
     player.position.x = 2000.f + Random::randomFloat(0.f, 200.f);
-    player.weapons.insert({Weapon::GRENADE, Weapon::MISSILE});
+    player.weapons.insert({
+	Weapon::GRENADE,
+	Weapon::MISSILE,
+	Weapon::BEAM
+	});
+
     player.id = players.size();
     player.controllerID = c.first;
 
@@ -168,6 +173,19 @@ void PlayerSystem::update(float dt)
 
     p.angle += 14.f * dt * (goalAngle - p.angle);
 
+
+    // Health
+    if (p.health <= 0.f && p.alive) {
+      p.health = 0.f;
+      p.alive = false;
+
+      EvdPlayerDeath d;
+      d.player = p;
+      EventManager::Send(Event::PLAYER_DEATH, d);
+
+      Console::log() << red << "Player death";
+    }
+
   }
 
   ImGui::Begin("Players", NULL, ImGuiWindowFlags_NoCollapse);
@@ -180,9 +198,10 @@ void PlayerSystem::update(float dt)
 
     if(ImGui::CollapsingHeader(header_label.str().c_str(), flags)) {
       ImGui::Text("Health: %2.f", p.health);
-      ImGui::Text("Airborne: %d", p.airborne);
-      ImGui::Text("Jump available: %d", p.jumpAvailable);
-      ImGui::Text("Out of control: %d", p.outOfControl);
+      ImGui::Text("Weapon: %lu", p.currentWeaponIndex);
+      ImGui::Text("Airborne: %i", p.airborne);
+      ImGui::Text("Jump available: %i", p.jumpAvailable);
+      ImGui::Text("Out of control: %i", p.outOfControl);
     }
   }
   ImGui::End();
@@ -215,6 +234,8 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
   // Release
   else {
     switch (button) {
+      case JOY_BUTTON_RB:
+	releaseWeapon(player); break;
       default: break;
     }
   }
@@ -242,10 +263,27 @@ void PlayerSystem::fireWeapon(Player& p)
 
   Weapon currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
 
+  if (currentWeapon == Weapon::BEAM) {
+    p.firingBeam = true;
+  }
+
   EvdPlayerFireWeapon d;
   d.player = p;
   d.weapon = currentWeapon;
   EventManager::Send(Event::PLAYER_FIRE_WEAPON, d);
+}
+
+void PlayerSystem::releaseWeapon(Player& p)
+{
+  if (p.weapons.size() == 0) return;
+
+  Weapon currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
+
+  if (currentWeapon == Weapon::BEAM) {
+    p.firingBeam = false;
+  }
+
+  EventManager::Send(Event::PLAYER_RELEASE_WEAPON);
 }
 
 void PlayerSystem::secondaryFireWeapon(Player& p)

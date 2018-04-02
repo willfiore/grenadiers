@@ -27,20 +27,19 @@
 #include "ProjectileSystem.hpp"
 #include "PowerupSystem.hpp"
 
+#include "Renderer/BaseRenderer.hpp"
 #include "Renderer/PlayerRenderer.hpp"
 #include "Renderer/ProjectileRenderer.hpp"
 #include "Renderer/TerrainRenderer.hpp"
 #include "Renderer/PowerupRenderer.hpp"
+#include "Renderer/BeamRenderer.hpp"
 
 int main() {
-
-  /////////////////
-  // Initialization
-  /////////////////
 
   glfwInit();
 
   Window w;
+
   glEnable(GL_DEPTH_TEST);
 
   // ImGui
@@ -77,12 +76,8 @@ int main() {
 
   ResourceManager::LoadShader("base", "base.vert", "base.frag");
   ResourceManager::LoadShader("terrain", "terrain.vert", "terrain.frag");
-
-  Shader shader_post = 
-    ResourceManager::LoadShader("post", "post.vert", "post.frag");
-
-  shader_post.use();
-  shader_post.setInt("screenTexture", 0);
+  ResourceManager::LoadShader("post", "post.vert", "post.frag");
+  w.initShaders();
 
   // Controller setup
   std::map<int, ControllerData> controllers;
@@ -109,6 +104,10 @@ int main() {
   TerrainRenderer terrainRenderer(&terrain);
   ProjectileRenderer projectileRenderer(&projectileSystem);
   PowerupRenderer powerupRenderer(&powerupSystem);
+  BeamRenderer beamRenderer(&playerSystem);
+
+  // Create main VAO, VBO, for base geometry
+  BaseRenderer::InitSharedVertexData();
 
   // Main loop
   const float dt = 1.f/60.f; // logic tickrate
@@ -129,6 +128,8 @@ int main() {
     double frameTime = newTime - t;
     t = newTime;
     accumulator += frameTime;
+
+    glfwPollEvents();
 
     // Logic tick
     // WARNING: "if" rather than "while" can cause spiral of death
@@ -204,20 +205,19 @@ int main() {
     playerRenderer.draw();
     projectileRenderer.draw();
     powerupRenderer.draw();
+    beamRenderer.draw();
 
     // --------------------------------
     // Finished rendering scene
     // Do not need depth test in post
 
     // Final pass to screen
-    shader_post.use();
     w.render();
 
     ImGui::Render();
     ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
     glfwSwapBuffers(w.getWindow());
-    glfwPollEvents();
   }
 
   // Cleanup

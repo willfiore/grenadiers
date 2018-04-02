@@ -3,6 +3,7 @@
 #include <string>
 
 #include "Event.hpp"
+#include "Shader.hpp"
 
 class GLFWwindow;
 
@@ -17,6 +18,7 @@ public:
 
   int getFBO() const { return FBO; }
 
+  void initShaders();
   void render();
 
   const GLFWwindow* getWindow() const { return window; }
@@ -33,8 +35,8 @@ private:
 
   // Render buffers
   unsigned int FBO, FBO_buffer; // Pre-post multisample framebuffer
-  unsigned int PFBO, PFBO_buffer; // Post processing downsampled buffer
+  unsigned int PFBO[2], PFBO_buffer[2]; // Post processing downsampled buffer
   unsigned int VAO, VBO; // final quad to draw
 
-  void generateFBO();
+  Shader shader_post;
 };

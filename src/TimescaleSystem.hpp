@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Event.hpp"
+
 class TimescaleSystem
 {
 public:

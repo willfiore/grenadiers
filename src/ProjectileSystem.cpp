@@ -120,6 +120,7 @@ void ProjectileSystem::onPlayerSecondaryFireWeapon(Event e)
       d.position = p.position;
       d.radius = 0.7f * GRENADE_EXPLOSION_RADIUS;
       d.damage = 0.5f * GRENADE_MAX_DAMAGE;
+      d.knockback = 100.f;
       EventManager::Send(Event::EXPLOSION, d);
 
       projectiles.erase(it);

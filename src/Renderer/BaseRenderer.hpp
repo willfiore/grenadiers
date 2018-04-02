@@ -9,7 +9,11 @@ public:
   BaseRenderer();
   virtual void draw() const = 0;
 
+  static void InitSharedVertexData();
 protected:
-  GLuint VAO;
-  Shader shader;
+  const static GLint VERTS_BEGIN_QUAD = 0;
+  const static GLint VERTS_BEGIN_LINE = 6;
+
+  static GLuint sharedVAO;
+  static GLuint sharedVBO;
 };

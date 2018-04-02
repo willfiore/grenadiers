@@ -29,6 +29,10 @@ void Console::render()
   flush();
 
   ImGui::Begin("Debug Console", NULL, ImGuiWindowFlags_NoCollapse);
+  ImGui::TextColored({0.0, 1.0, 0.0, 1.0},
+      "Framerate: %2.f", ImGui::GetIO().Framerate);
+  ImGui::TextColored({0.4, 0.4, 0.4, 1.0},
+      "--------------------");
 
   for (auto e : entries) {
 

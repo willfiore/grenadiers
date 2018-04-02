@@ -94,6 +94,6 @@ glm::mat4 CameraSystem::getProjection() const
 
 void CameraSystem::onExplosion(Event e)
 {
-  shakeAmplitude = 8.f;
+  shakeAmplitude = 2.f;
   shakeStartTimestamp = e.timestamp;
 }

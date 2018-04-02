@@ -7,6 +7,7 @@
 enum class Weapon {
   GRENADE,
   MISSILE,
+  BEAM,
   NUM_WEAPONS
 };
 
@@ -23,7 +24,7 @@ struct Player {
   static constexpr float MIN_SIDEJUMP_ANGLE = glm::radians(20.f);
   static constexpr float JUMP_VELOCITY = 1000.f;
   static constexpr float SIZE = 10.f;
-  static constexpr float STARTING_HEALTH = 400.f;
+  static constexpr float STARTING_HEALTH = 200.f;
 
   glm::vec2 getCenterPosition();
 
@@ -46,9 +47,11 @@ struct Player {
   std::set<Weapon>::size_type currentWeaponIndex;
 
   // Flags
+  bool alive;
   bool airborne;
   bool jumpAvailable;
   bool outOfControl;
+  bool firingBeam;
 
   // Dirty flags
   bool dirty_justLeftGround;

@@ -147,7 +147,7 @@ void Terrain::onExplosion(Event e)
       float dt = t - e.timestamp;
 
       // Oscillate up and down over time
-      float r = 18.f * (glm::cos(15.f*dt) - 1);
+      float r = 18.f * (glm::cos(15.f*dt + glm::half_pi<float>()));
 
       // Fade out over time
       float mt = glm::exp(-3.5f*dt);
