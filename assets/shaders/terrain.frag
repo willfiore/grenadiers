@@ -29,7 +29,7 @@ vec3 hsv2rgb(vec3 c)
 }
 
 void main() {
-  vec3 lightColor_hsv = vec3(0.55, 1.0, 0.5);
+  vec3 lightColor_hsv = vec3(0.75, 1.0, 0.5);
   vec3 lightColor = hsv2rgb(lightColor_hsv);
 
   vec3 norm = normalize(Normal);

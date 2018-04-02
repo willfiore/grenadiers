@@ -175,8 +175,10 @@ void PlayerSystem::update(float dt)
     std::stringstream header_label;
     header_label << "Player " << p.id; 
 
-    if(ImGui::CollapsingHeader(header_label.str().c_str(),
-	  ImGuiTreeNodeFlags_DefaultOpen)) {
+    int flags = 0;
+    if (p.id == 0) flags = ImGuiTreeNodeFlags_DefaultOpen;
+
+    if(ImGui::CollapsingHeader(header_label.str().c_str(), flags)) {
       ImGui::Text("Health: %2.f", p.health);
       ImGui::Text("Airborne: %d", p.airborne);
       ImGui::Text("Jump available: %d", p.jumpAvailable);

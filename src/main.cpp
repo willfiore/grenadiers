@@ -21,6 +21,7 @@
 #include "Terrain.hpp"
 #include "Player.hpp"
 
+#include "TimescaleSystem.hpp"
 #include "CameraSystem.hpp"
 #include "PlayerSystem.hpp"
 #include "ProjectileSystem.hpp"
@@ -113,6 +114,8 @@ int main() {
   }
 
   // Module setup
+  TimescaleSystem timescaleSystem;
+
   Terrain terrain;
   PlayerSystem playerSystem(&terrain, &controllers);
   ProjectileSystem projectileSystem(&terrain);
@@ -126,10 +129,8 @@ int main() {
 
   // Main loop
   const float dt = 1.f/60.f; // logic tickrate
-  float timescale = 1.f;
-  float sim_dt = timescale * dt;
 
-  double realTime = glfwGetTime();
+  double t = glfwGetTime();
   double sim_t = 0.f;
   double accumulator = 0.0;
 
@@ -142,14 +143,16 @@ int main() {
     Console::render();
 
     double newTime = glfwGetTime();
-    double frameTime = newTime - realTime;
-    realTime = newTime;
+    double frameTime = newTime - t;
+    t = newTime;
     accumulator += frameTime;
 
     // Logic tick
     // WARNING: "if" rather than "while" can cause spiral of death
     if (accumulator >= dt) {
       accumulator -= dt;
+
+      float sim_dt = timescaleSystem.getTimescale() * dt;
       sim_t += sim_dt;
 
       // Player input
@@ -183,6 +186,7 @@ int main() {
 
       // Tick update
       EventManager::Update(sim_t, sim_dt);
+      timescaleSystem.update(t, dt);
 
       playerSystem.update(sim_dt);
       projectileSystem.update(sim_dt);
@@ -217,7 +221,6 @@ int main() {
     playerRenderer.draw();
     projectileRenderer.draw();
     powerupRenderer.draw();
-
 
     // --------------------------------
     // Finished rendering scene
