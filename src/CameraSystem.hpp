@@ -7,13 +7,13 @@
 #include "Event.hpp"
 
 class Window;
-class Player;
+struct Player;
 
 class CameraSystem
 {
 public:
   CameraSystem(const Window*, const std::vector<Player>&);
-  void update(float dt);
+  void update(float t, float dt);
 
   glm::mat4 getView() const;
   glm::mat4 getProjection() const;
@@ -25,7 +25,9 @@ private:
   const Window* window;
   
   float fov;
-  float shake;
+
+  float shakeAmplitude;
+  float shakeStartTimestamp;
   
   const std::vector<Player>& players;
 

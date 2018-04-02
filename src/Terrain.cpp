@@ -144,11 +144,12 @@ void Terrain::onExplosion(Event e)
   // Wobble terrain
   addFunc([=](float x, float t) -> float {
 
+      float dt = t - e.timestamp;
+
       // Oscillate up and down over time
-      float r = 14.f * -glm::cos(20.f*t);
+      float r = 18.f * (glm::cos(20.f*dt) - 1);
 
       // Fade out over time
-      float dt = t - e.timestamp;
       float mt = glm::exp(-4.f*dt);
 
       // Fade out over distance

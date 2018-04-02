@@ -3,7 +3,6 @@
 #include <GLFW/glfw3.h>
 
 Event::Event(Type t) :
-  type(t),
-  timestamp(glfwGetTime())
+  type(t)
 {
 }

@@ -16,10 +16,12 @@ CameraSystem::CameraSystem(const Window* w, const std::vector<Player>& p) :
   players(p)
 {
   fov = 60.f;
-  shake = 1.f;
+
+  shakeAmplitude = 0.f;
+  shakeStartTimestamp = 0.f;
 }
 
-void CameraSystem::update(float dt)
+void CameraSystem::update(float t, float dt)
 {
   if (players.size() == 0) return;
 
@@ -59,11 +61,10 @@ void CameraSystem::update(float dt)
 
   position = position + (targetPos - position) * dt * 4.f;
 
-  shake = shake * 0.87f;
-  if (shake < 0.f) shake = 0.f;
-
-  position.x += Random::randomFloat(-shake, shake);
-  position.y += Random::randomFloat(-shake, shake);
+  // Camera shake
+  float shakeAmount = shakeAmplitude * glm::exp(6.f*(shakeStartTimestamp-t));
+  position.x += Random::randomFloat(-shakeAmount, shakeAmount);
+  position.y += Random::randomFloat(-shakeAmount, shakeAmount);
 
   EventManager::Register(Event::EXPLOSION,
       std::bind(&CameraSystem::onExplosion, this, _1));
@@ -93,5 +94,6 @@ glm::mat4 CameraSystem::getProjection() const
 
 void CameraSystem::onExplosion(Event e)
 {
-  shake = 12.f;
+  shakeAmplitude = 8.f;
+  shakeStartTimestamp = e.timestamp;
 }

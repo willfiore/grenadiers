@@ -126,7 +126,11 @@ int main() {
 
   // Main loop
   const float dt = 1.f/60.f; // logic tickrate
-  double currentTime = glfwGetTime();
+  float timescale = 1.f;
+  float sim_dt = timescale * dt;
+
+  double realTime = glfwGetTime();
+  double sim_t = 0.f;
   double accumulator = 0.0;
 
   EventManager::Send(Event::GAME_START);
@@ -138,14 +142,15 @@ int main() {
     Console::render();
 
     double newTime = glfwGetTime();
-    double frameTime = newTime - currentTime;
-    currentTime = newTime;
+    double frameTime = newTime - realTime;
+    realTime = newTime;
     accumulator += frameTime;
 
     // Logic tick
     // WARNING: "if" rather than "while" can cause spiral of death
     if (accumulator >= dt) {
       accumulator -= dt;
+      sim_t += sim_dt;
 
       // Player input
       //////////////////////////////////////////
@@ -177,13 +182,15 @@ int main() {
       }
 
       // Tick update
-      playerSystem.update(dt);
-      projectileSystem.update(dt);
-      powerupSystem.update(dt);
-      terrain.update(currentTime, dt);
+      EventManager::Update(sim_t, sim_dt);
+
+      playerSystem.update(sim_dt);
+      projectileSystem.update(sim_dt);
+      powerupSystem.update(sim_dt);
+      terrain.update(sim_t, sim_dt);
 
       // Camera movement
-      cameraSystem.update(dt);
+      cameraSystem.update(sim_t, sim_dt);
     }
 
     /////////
