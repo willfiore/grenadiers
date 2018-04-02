@@ -75,31 +75,14 @@ int main() {
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     std::cout << "Error: Incomplete frame buffer" << std::endl;
 
-  ResourceManager::LoadShader(
-      "../assets/shaders/base.vert", "../assets/shaders/base.frag",
-      "base"
-      );
+  ResourceManager::LoadShader("base", "base.vert", "base.frag");
+  ResourceManager::LoadShader("terrain", "terrain.vert", "terrain.frag");
 
-  ResourceManager::LoadShader(
-      "../assets/shaders/terrain.vert", "../assets/shaders/terrain.frag",
-      "terrain"
-      );
-
-  Shader shader_post = ResourceManager::LoadShader(
-      "../assets/shaders/post.vert", "../assets/shaders/post.frag",
-      "post"
-      );
-
-  Shader shader_pingpong = ResourceManager::LoadShader(
-      "../assets/shaders/pingpong.vert", "../assets/shaders/pingpong.frag",
-      "pingpong"
-      );
+  Shader shader_post = 
+    ResourceManager::LoadShader("post", "post.vert", "post.frag");
 
   shader_post.use();
   shader_post.setInt("screenTexture", 0);
-
-  shader_pingpong.use();
-  shader_pingpong.setInt("screenTexture", 0);
 
   // Controller setup
   std::map<int, ControllerData> controllers;
@@ -225,7 +208,6 @@ int main() {
     // --------------------------------
     // Finished rendering scene
     // Do not need depth test in post
-    glDisable(GL_DEPTH_TEST);
 
     // Final pass to screen
     shader_post.use();

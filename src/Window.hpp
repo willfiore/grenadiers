@@ -28,10 +28,12 @@ private:
   int width;
   int height;
   bool fullscreen;
+  int multisamples;
   std::string name;
 
   // Render buffers
-  unsigned int FBO, FBO_buffer; // Pre-post framebuffer
+  unsigned int FBO, FBO_buffer; // Pre-post multisample framebuffer
+  unsigned int PFBO, PFBO_buffer; // Post processing downsampled buffer
   unsigned int VAO, VBO; // final quad to draw
 
   void generateFBO();

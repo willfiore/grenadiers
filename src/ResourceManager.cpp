@@ -6,9 +6,15 @@
 // Initialize statics
 std::map<std::string, Shader> ResourceManager::shaders;
 
-Shader ResourceManager::LoadShader(const GLchar* vertexPath,
-    const GLchar* fragmentPath, std::string name)
+Shader ResourceManager::LoadShader(std::string name,
+    const GLchar* vertexRelativePath,
+    const GLchar* fragmentRelativePath)
 {
+  std::string vertexPath = SHADER_PATH;
+  std::string fragmentPath = SHADER_PATH;
+  vertexPath.append(vertexRelativePath);
+  fragmentPath.append(fragmentRelativePath);
+
   std::string vertexCode, fragmentCode;
   std::ifstream vertexFile, fragmentFile;
 

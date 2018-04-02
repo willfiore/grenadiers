@@ -10,12 +10,12 @@
 void glfw_key_callback(GLFWwindow* window,
     int key, int scancode, int action, int mods)
 {
-  if (!action) return;
 }
 
 Window::Window() :
   width(1366),
-  height(768)
+  height(768),
+  multisamples(16)
 {
   name = "Platformer";
 
@@ -42,40 +42,41 @@ Window::Window() :
   generateFBO();
 }
 
-void Window::render()
-{
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  glBindVertexArray(VAO);
-  glDrawArrays(GL_TRIANGLES, 0, 6);
-  glBindVertexArray(0);
-}
-
 void Window::generateFBO()
 {
-  glDeleteFramebuffers(1, &FBO);
   glGenFramebuffers(1, &FBO);
   glGenTextures(1, &FBO_buffer);
 
   glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-  glBindTexture(GL_TEXTURE_2D, FBO_buffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height,
-      0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-      FBO_buffer, 0);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, FBO_buffer);
+  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisamples,
+      GL_RGB, width, height, GL_TRUE);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+      GL_TEXTURE_2D_MULTISAMPLE, FBO_buffer, 0);
+
   // We require a depth buffer here
   unsigned int FBO_RBO;
-
-  glDeleteRenderbuffers(1, &FBO_RBO);
   glGenRenderbuffers(1, &FBO_RBO);
   glBindRenderbuffer(GL_RENDERBUFFER, FBO_RBO);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+  glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisamples,
+      GL_DEPTH24_STENCIL8, width, height);
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER,
       GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, FBO_RBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+  // Post processing downsampled framebuffers
+  glGenFramebuffers(1, &PFBO);
+  glGenTextures(1, &PFBO_buffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, PFBO);
+  glBindTexture(GL_TEXTURE_2D, PFBO_buffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
+      GL_RGB, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+      GL_TEXTURE_2D, PFBO_buffer, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   float screenQuadVerts[] = { 
@@ -103,5 +104,24 @@ void Window::generateFBO()
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
       (void*)(2 * sizeof(float)));
+}
+
+void Window::render()
+{
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, FBO);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, PFBO);
+
+  glBlitFramebuffer(0, 0, width, height, 0, 0, width, height,
+      GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glDisable(GL_DEPTH_TEST);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glBindVertexArray(VAO);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, PFBO_buffer);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+  glBindVertexArray(0);
 }
 

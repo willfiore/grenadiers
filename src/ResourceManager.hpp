@@ -7,7 +7,9 @@
 
 class ResourceManager {
 public:
-  static Shader LoadShader(const GLchar* vertexShaderFile, const GLchar* fragmentShaderFile, std::string name);
+  static constexpr char SHADER_PATH[] = "../assets/shaders/";
+
+  static Shader LoadShader(std::string name, const GLchar* vertexShaderFile, const GLchar* fragmentShaderFile);
   static Shader GetShader(std::string name);
 private:
   ResourceManager() {};
