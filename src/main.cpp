@@ -172,7 +172,7 @@ int main() {
       EventManager::Update(sim_t, sim_dt);
       timescaleSystem.update(t, dt);
 
-      playerSystem.update(sim_dt);
+      playerSystem.update(sim_t, sim_dt);
       projectileSystem.update(sim_dt);
       powerupSystem.update(sim_dt);
       terrain.update(sim_t, sim_dt);

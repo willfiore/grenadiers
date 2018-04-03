@@ -25,11 +25,20 @@ void ProjectileSystem::update(float dt)
 {
   for (auto i = projectiles.begin(); i != projectiles.end();) {
     Projectile& p = *i;
+
+    if (p.dirty_justExploded) {
+      projectiles.erase(i);
+      continue;
+    }
+
     p.age += dt;
     p.velocity += p.acceleration * dt;
     glm::vec2 newPosition = p.position + p.velocity * dt;
 
-    if (!p.dirty_justBounced) {
+    if (p.dirty_justBounced) {
+      p.dirty_justBounced = false;
+    }
+    else {
       std::vector<LineSegment> tSegments =
 	terrain->getSegmentsInRange(p.position.x, newPosition.x);
 
@@ -44,48 +53,62 @@ void ProjectileSystem::update(float dt)
 	  p.dirty_justBounced = true;
 
 	  newPosition = intersection.second;
-	  float terrainAngle = terrain->getAngle(p.position.x);
-	  float projectileAngle = glm::atan(p.velocity.y, p.velocity.x);
-	  float rotateAngle = 2 * (terrainAngle - projectileAngle);
-	  p.velocity = 0.5f * glm::rotate(p.velocity, rotateAngle);
+	  projectileHitGround(p, newPosition);
 	  break;
 	}
       }
 
       // Failsafe
-      if (!foundIntersection && newPosition.y < terrain->getHeight(newPosition.x)) {
+      if (!foundIntersection &&
+	  newPosition.y < terrain->getHeight(newPosition.x)) {
 	newPosition.y = terrain->getHeight(newPosition.x);
-	float terrainAngle = terrain->getAngle(p.position.x);
-	float projectileAngle = glm::atan(p.velocity.y, p.velocity.x);
-	float rotateAngle = 2 * (terrainAngle - projectileAngle);
-	p.velocity = 0.5f * glm::rotate(p.velocity, rotateAngle);
+	projectileHitGround(p, newPosition);
       }
-    } else {
-      p.dirty_justBounced = false;
     }
 
     p.position = newPosition;
 
     if (p.age > GRENADE_LIFETIME) {
-      EvdExplosion d;
-      d.position = p.position;
-      d.radius = GRENADE_EXPLOSION_RADIUS;
-      d.damage = GRENADE_MAX_DAMAGE;
-      EventManager::Send(Event::EXPLOSION, d);
-
-      projectiles.erase(i);
-      continue;
+      explodeProjectile(p);
     }
 
     ++i;
   }
 }
 
+void ProjectileSystem::projectileHitGround(Projectile& p, glm::vec2 pos)
+{
+  // Bounce if grenade
+  if (p.type == Projectile::GRENADE) {
+    float terrainAngle = terrain->getAngle(p.position.x);
+    float projectileAngle = glm::atan(p.velocity.y, p.velocity.x);
+    float rotateAngle = 2 * (terrainAngle - projectileAngle);
+    p.velocity = 0.5f * glm::rotate(p.velocity, rotateAngle);
+    p.position = pos;
+  }
+  // Explode otherwise
+  else {
+    p.position = pos;
+    explodeProjectile(p);
+  }
+}
+
+void ProjectileSystem::explodeProjectile(Projectile& p)
+{
+  EvdExplosion d;
+  d.position = p.position;
+  d.damage = GRENADE_MAX_DAMAGE;
+  d.radius = GRENADE_EXPLOSION_RADIUS;
+  d.knockback = GRENADE_KNOCKBACK;
+  EventManager::Send(Event::EXPLOSION, d);
+  p.dirty_justExploded = true;
+}
+
 void ProjectileSystem::onPlayerFireWeapon(Event e)
 {
   auto d = boost::any_cast<EvdPlayerFireWeapon>(e.data);
 
-  if (d.weapon == Weapon::GRENADE) {
+  if (d.weapon.type == Weapon::Type::GRENADE) {
     Projectile& p = spawnProjectile(Projectile::GRENADE);
     p.owner = d.player.id;
 
@@ -97,7 +120,7 @@ void ProjectileSystem::onPlayerFireWeapon(Event e)
     p.acceleration = {0.f, -1000.f};
   }
 
-  if (d.weapon == Weapon::MISSILE) {
+  if (d.weapon.type == Weapon::Type::MISSILE) {
     Projectile& p = spawnProjectile(Projectile::MISSILE);
     p.owner = d.player.id;
 
@@ -115,12 +138,15 @@ void ProjectileSystem::onPlayerSecondaryFireWeapon(Event e)
   for (auto it = projectiles.begin(); it != projectiles.end();) {
     const Projectile& p = *it;
 
-    if (p.owner == d.player.id) {
+    // Grenade secondary fire explodes grenades
+    if (p.owner == d.player.id &&
+	p.type == Projectile::GRENADE &&
+	d.weapon.type == Weapon::Type::GRENADE) {
       EvdExplosion d;
       d.position = p.position;
-      d.radius = 0.7f * GRENADE_EXPLOSION_RADIUS;
-      d.damage = 0.5f * GRENADE_MAX_DAMAGE;
-      d.knockback = 100.f;
+      d.radius = GRENADE_EXPLOSION_RADIUS;
+      d.damage = GRENADE_MAX_DAMAGE;
+      d.knockback = GRENADE_KNOCKBACK;
       EventManager::Send(Event::EXPLOSION, d);
 
       projectiles.erase(it);

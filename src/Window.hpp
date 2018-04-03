@@ -14,7 +14,6 @@ public:
 
   int getWidth() const { return width; }
   int getHeight() const { return height; }
-  int isFullscreen() const { return fullscreen; }
 
   int getFBO() const { return FBO; }
 
@@ -29,7 +28,6 @@ private:
   // Window props
   int width;
   int height;
-  bool fullscreen;
   int multisamples;
   std::string name;
 

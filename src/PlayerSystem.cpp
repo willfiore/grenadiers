@@ -4,6 +4,7 @@
 
 #include "Random.hpp"
 #include "Player.hpp"
+#include "Weapon.hpp"
 #include "Terrain.hpp"
 #include "Powerup.hpp"
 #include "Joystick.hpp"
@@ -25,11 +26,9 @@ PlayerSystem::PlayerSystem(
   for (const auto& c : *controllers) {
     Player player;
     player.position.x = 2000.f + Random::randomFloat(0.f, 200.f);
-    player.weapons.insert({
-	Weapon::GRENADE,
-	Weapon::MISSILE,
-	Weapon::BEAM
-	});
+
+    player.giveWeapon(Weapon::Type::BEAM);
+    player.giveWeapon(Weapon::Type::GRENADE);
 
     player.id = players.size();
     player.controllerID = c.first;
@@ -42,6 +41,7 @@ PlayerSystem::PlayerSystem(
   player.position.x = 2200.f;
   player.id = players.size();
   player.controllerID = -1;
+  player.giveWeapon(Weapon::Type::GRENADE);
   players.push_back(player);
 
   EventManager::Register(Event::EXPLOSION,
@@ -51,7 +51,7 @@ PlayerSystem::PlayerSystem(
       std::bind(&PlayerSystem::onPowerupPickup, this, _1));
 }
 
-void PlayerSystem::update(float dt)
+void PlayerSystem::update(float t, float dt)
 {
   for (auto& p : players) {
 
@@ -63,7 +63,24 @@ void PlayerSystem::update(float dt)
 
     // Aiming
     ////////////////////////////////////////////////////
-    p.aimDirection = glm::atan(axes[1], axes[0]);
+    float aimSpeed;
+    if (!p.firingBeam) aimSpeed = Player::AIM_SPEED;
+    else aimSpeed = Player::AIM_SPEED_BEAM;
+
+    float currentAngle = p.aimDirection;
+    float targetAngle = glm::atan(axes[1], axes[0]);
+    float angleDiff = fabs(targetAngle - currentAngle);
+    if (angleDiff > glm::pi<float>()) {
+      if (targetAngle > currentAngle) currentAngle += glm::two_pi<float>();
+      else targetAngle += glm::two_pi<float>();
+    }
+    float newAngle = currentAngle +
+      (aimSpeed * dt * (targetAngle - currentAngle));
+
+    if (newAngle >= 0.f && newAngle < glm::two_pi<float>())
+      p.aimDirection = newAngle;
+    else
+      p.aimDirection = fmod(newAngle, glm::two_pi<float>());
 
     // Movement
     ////////////////////////////////////////////////////
@@ -72,11 +89,13 @@ void PlayerSystem::update(float dt)
     float accel_factor = Player::ACCEL_X;
     if (p.airborne)
       accel_factor = Player::ACCEL_X_AIRBORNE;
-    if (p.airborne && p.outOfControl)
+    if (p.airborne && (p.outOfControl || p.firingBeam))
+      accel_factor = Player::ACCEL_X_AIRBORNE_NOCONTROL;
+    if (!p.airborne && (p.outOfControl || p.firingBeam))
       accel_factor = Player::ACCEL_X_NOCONTROL;
 
     // Acceleration due to player input
-    if (!p.outOfControl) {
+    if (!p.outOfControl && !p.firingBeam) {
       p.acceleration.x = axes[0] * accel_factor;
     } else {
       p.acceleration.x = 0.f;
@@ -140,7 +159,8 @@ void PlayerSystem::update(float dt)
 	}
 
 	// Failsafe
-	if (!foundIntersection && newPosition.y < terrain->getHeight(newPosition.x))
+	if (!foundIntersection && newPosition.y <
+	    terrain->getHeight(newPosition.x))
 	  newPosition.y = terrain->getHeight(newPosition.x);
       } else {
 	p.dirty_justLeftGround = false;
@@ -173,19 +193,20 @@ void PlayerSystem::update(float dt)
 
     p.angle += 14.f * dt * (goalAngle - p.angle);
 
-
     // Health
-    if (p.health <= 0.f && p.alive) {
+    if (p.health <= 0.f) {
       p.health = 0.f;
-      p.alive = false;
 
-      EvdPlayerDeath d;
-      d.player = p;
-      EventManager::Send(Event::PLAYER_DEATH, d);
+      if (p.alive) {
+	p.alive = false;
 
-      Console::log() << red << "Player death";
+	EvdPlayerDeath d;
+	d.player = p;
+	EventManager::Send(Event::PLAYER_DEATH, d);
+
+	Console::log() << red << "Player death";
+      }
     }
-
   }
 
   ImGui::Begin("Players", NULL, ImGuiWindowFlags_NoCollapse);
@@ -198,7 +219,8 @@ void PlayerSystem::update(float dt)
 
     if(ImGui::CollapsingHeader(header_label.str().c_str(), flags)) {
       ImGui::Text("Health: %2.f", p.health);
-      ImGui::Text("Weapon: %lu", p.currentWeaponIndex);
+      ImGui::Text("Weapon: %u", (unsigned int)p.weapons[p.currentWeaponIndex].type);
+      ImGui::Text("Ammo: %i", p.weapons[p.currentWeaponIndex].ammo);
       ImGui::Text("Airborne: %i", p.airborne);
       ImGui::Text("Jump available: %i", p.jumpAvailable);
       ImGui::Text("Out of control: %i", p.outOfControl);
@@ -243,7 +265,7 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
 
 void PlayerSystem::jump(Player& p)
 {
-  if (!p.jumpAvailable || p.outOfControl) return;
+  if (!p.jumpAvailable || p.outOfControl || p.firingBeam) return;
 
   float terrainAngle = terrain->getAngle(p.position.x);
 
@@ -261,11 +283,18 @@ void PlayerSystem::fireWeapon(Player& p)
   // Can't fire if they have no weapons!
   if (p.weapons.size() == 0) return;
 
-  Weapon currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
+  Weapon& currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
 
-  if (currentWeapon == Weapon::BEAM) {
+  if (currentWeapon.ammo <= 0) {
+    currentWeapon.ammo = 0;
+    return;
+  }
+
+  if (currentWeapon.type == Weapon::Type::BEAM) {
     p.firingBeam = true;
   }
+
+  currentWeapon.ammo--;
 
   EvdPlayerFireWeapon d;
   d.player = p;
@@ -277,9 +306,9 @@ void PlayerSystem::releaseWeapon(Player& p)
 {
   if (p.weapons.size() == 0) return;
 
-  Weapon currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
+  Weapon& currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
 
-  if (currentWeapon == Weapon::BEAM) {
+  if (currentWeapon.type == Weapon::Type::BEAM) {
     p.firingBeam = false;
   }
 

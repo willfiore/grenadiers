@@ -3,5 +3,6 @@
 
 * linecast projectiles
 
-rescue deep projectiles using normal
-of terrain rather than moving straight up
+- (LOW PRIORITY)
+  rescue deep projectiles using normal
+  of terrain rather than moving straight up

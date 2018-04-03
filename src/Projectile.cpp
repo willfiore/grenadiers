@@ -14,4 +14,6 @@ Projectile::Projectile(Type t)
   position = glm::vec2();
   velocity = glm::vec2();
   acceleration = glm::vec2();
+  
+  dirty_justExploded = false;
 }

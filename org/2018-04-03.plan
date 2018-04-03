@@ -1,0 +1,5 @@
+* fix player origin (laser beam not drawn at center after rotation)
+* draw aim direction
+* smooth aim direction
+* slow aim for beam
+* missiles explode on terrain contact

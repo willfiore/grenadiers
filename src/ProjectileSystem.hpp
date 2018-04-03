@@ -19,6 +19,9 @@ private:
   void onPlayerFireWeapon(Event);
   void onPlayerSecondaryFireWeapon(Event);
 
+  void projectileHitGround(Projectile&, glm::vec2);
+  void explodeProjectile(Projectile&);
+
   Projectile& spawnProjectile(Projectile::Type);
 
   std::vector<Projectile> projectiles;

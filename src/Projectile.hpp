@@ -3,8 +3,9 @@
 #include <glm/vec2.hpp>
 
 constexpr float GRENADE_LIFETIME = 3.f;
-constexpr float GRENADE_EXPLOSION_RADIUS = 200.f;
-constexpr float GRENADE_MAX_DAMAGE = 200.f;
+constexpr float GRENADE_EXPLOSION_RADIUS = 140.f;
+constexpr float GRENADE_MAX_DAMAGE = 140.f;
+constexpr float GRENADE_KNOCKBACK = 800.f;
 
 struct Projectile
 {
@@ -26,4 +27,5 @@ struct Projectile
   glm::vec2 acceleration;
 
   bool dirty_justBounced;
+  bool dirty_justExploded;
 };

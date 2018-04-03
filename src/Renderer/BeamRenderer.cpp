@@ -24,9 +24,9 @@ void BeamRenderer::draw() const
     glm::mat4 model = glm::mat4();
 
     model = glm::translate(model,
-	glm::vec3(p.position.x, p.position.y + Player::SIZE, 0.f));
+	glm::vec3(p.getCenterPosition(), 0.f));
     model = glm::rotate(model, -p.aimDirection, glm::vec3(0.f, 0.f, 1.f));
-    model = glm::scale(model, glm::vec3({100.f, 2.f, 1.f}));
+    model = glm::scale(model, glm::vec3({10000.f, 2.f, 1.f}));
     model = glm::translate(model, glm::vec3({1.f, 0.f, 0.f}));
 
     shader.setMat4("model", model);
