@@ -3,3 +3,6 @@
 * smooth aim direction
 * slow aim for beam
 * missiles explode on terrain contact
+* fixed knockback for projectiles
+* ammo
+* ammo refresh for grenades

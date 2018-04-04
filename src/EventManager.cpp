@@ -3,12 +3,12 @@
 #include <iostream>
 
 // Statics
-float EventManager::time;
+double EventManager::time;
 
 std::map<Event::Type, std::vector<std::function<void(Event)> > >
 EventManager::funcs;
 
-void EventManager::Update(float t, float dt)
+void EventManager::Update(double t, double)
 {
   time = t;
 }

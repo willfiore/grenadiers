@@ -11,16 +11,17 @@ Weapon::Weapon(Type t)
   switch (t)
   {
     case Type::GRENADE:
-      ammo = 3;
+      maxAmmo = 3;
       break;
     case Type::MISSILE:
-      ammo = 5;
+      maxAmmo = 5;
       break;
     case Type::BEAM:
-      ammo = 100;
+      maxAmmo = 100;
       break;
     default:
-      ammo = 0;
+      maxAmmo = 0;
       break;
   }
+  ammo = maxAmmo;
 }

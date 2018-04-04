@@ -29,7 +29,7 @@ vec3 hsv2rgb(vec3 c)
 }
 
 void main() {
-  vec3 lightColor_hsv = vec3(0.4, 1.0, 0.5);
+  vec3 lightColor_hsv = vec3(0.0, 1.0, 0.7);
   vec3 lightColor = hsv2rgb(lightColor_hsv);
 
   vec3 norm = normalize(Normal);
@@ -37,7 +37,7 @@ void main() {
 
   // Ambient
   float ambientStrength = 0.0;
-  vec3 ambient = vec3(1.0, 1.0, 1.0);
+  vec3 ambient = lightColor;
   ambient *= ambientStrength;
 
   // Diffuse
@@ -45,10 +45,15 @@ void main() {
   vec3 diffuse = diff * lightColor;
 
   // Specular
-  vec3 result = (ambient + diffuse) * vec3(1.0, 1.0, 1.0);
+  vec3 result = ambient + diffuse;
 
-  if (FragPos.z < -90.f || FragPos.z > 30.f)
-    result *= vec3(0.8);
+  float marginSize = 8.f;
+  if (FragPos.z < 100.f - marginSize &&
+      FragPos.z > -100.f + marginSize)
+    result *= 0.1;
+
+  float modifier = 0.2 + 0.8 * (FragPos.z + 100)/200;
+    result *= modifier;
 
   FragColor = vec4(result, 1.0);
 }

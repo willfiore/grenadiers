@@ -23,7 +23,7 @@ struct Event
   Event(Type t);
 
   Type type;
-  float timestamp;
+  double timestamp;
   boost::any data;
 };
 

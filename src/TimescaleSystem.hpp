@@ -7,9 +7,9 @@ class TimescaleSystem
 public:
   TimescaleSystem();
 
-  void update(float t, float dt);
+  void update(double t, double dt);
   float getTimescale() const { return timescale; }
 
 private:
-  float timescale;
+  double timescale;
 };

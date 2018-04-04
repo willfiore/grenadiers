@@ -110,7 +110,7 @@ int main() {
   BaseRenderer::InitSharedVertexData();
 
   // Main loop
-  const float dt = 1.f/60.f; // logic tickrate
+  const double dt = 1.f/60.f; // logic tickrate
 
   double t = glfwGetTime();
   double sim_t = 0.f;
@@ -136,7 +136,7 @@ int main() {
     if (accumulator >= dt) {
       accumulator -= dt;
 
-      float sim_dt = timescaleSystem.getTimescale() * dt;
+      double sim_dt = timescaleSystem.getTimescale() * dt;
       sim_t += sim_dt;
 
       // Player input
@@ -188,7 +188,6 @@ int main() {
     // First pass
     glBindFramebuffer(GL_FRAMEBUFFER, w.getFBO());
     glEnable(GL_DEPTH_TEST);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Camera
@@ -197,9 +196,9 @@ int main() {
 
     glBindBuffer(GL_UNIFORM_BUFFER, UBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),
-        glm::value_ptr(projection));
+	glm::value_ptr(projection));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4),
-        glm::value_ptr(view));
+	glm::value_ptr(view));
 
     terrainRenderer.draw();
     playerRenderer.draw();

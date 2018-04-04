@@ -9,9 +9,9 @@
 
 struct TerrainPointModifier
 {
-  std::function<float(float, float)> func;
-  float age;
-  float lifetime;
+  std::function<float(float x, double t)> func;
+  double age;
+  double lifetime;
 };
 
 class Terrain {
@@ -30,8 +30,8 @@ public:
 
   const std::vector<glm::vec2>& getPoints() const { return points; }
 
-  void update(float t, float dt);
-  void addFunc(const std::function<float(float, float)>&, float);
+  void update(double t, double dt);
+  void addFunc(const std::function<float(float x, double t)>&, double);
 
 private:
   void onExplosion(Event e);

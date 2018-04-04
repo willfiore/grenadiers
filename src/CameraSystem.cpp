@@ -21,7 +21,7 @@ CameraSystem::CameraSystem(const Window* w, const std::vector<Player>& p) :
   shakeStartTimestamp = 0.f;
 }
 
-void CameraSystem::update(float t, float dt)
+void CameraSystem::update(double t, double dt)
 {
   if (players.size() == 0) return;
 
@@ -51,7 +51,8 @@ void CameraSystem::update(float t, float dt)
 
   float maxRange = maxPlayerBounds.x - minPlayerBounds.x;
 
-  glm::vec3 targetPos = {averagePlayerPos.x, 100.f + 0.8f*minPlayerBounds.y, 350.f};
+  glm::vec3 targetPos =
+  {averagePlayerPos.x, 100.f + 0.8f*minPlayerBounds.y, 350.f};
 
   float rangeModifier = 0.5f * (maxRange - 200.f);
   if (rangeModifier < 0.f) rangeModifier = 0.f;
@@ -59,7 +60,7 @@ void CameraSystem::update(float t, float dt)
 
   targetPos.z += rangeModifier;
 
-  position = position + (targetPos - position) * dt * 4.f;
+  position = position + (targetPos - position) * (float)dt * 4.f;
 
   // Camera shake
   float shakeAmount = shakeAmplitude * glm::exp(6.f*(shakeStartTimestamp-t));

@@ -11,7 +11,7 @@ class ProjectileSystem {
 public:
   ProjectileSystem(const Terrain*);
 
-  void update(float dt);
+  void update(double dt);
   const std::vector<Projectile>& getProjectiles() const { return projectiles; }
 
 private:

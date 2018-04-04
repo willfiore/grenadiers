@@ -13,7 +13,7 @@ class CameraSystem
 {
 public:
   CameraSystem(const Window*, const std::vector<Player>&);
-  void update(float t, float dt);
+  void update(double t, double dt);
 
   glm::mat4 getView() const;
   glm::mat4 getProjection() const;

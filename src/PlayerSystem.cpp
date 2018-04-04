@@ -28,8 +28,7 @@ PlayerSystem::PlayerSystem(
     player.position.x = 2000.f + Random::randomFloat(0.f, 200.f);
 
     player.giveWeapon(Weapon::Type::BEAM);
-    player.giveWeapon(Weapon::Type::GRENADE);
-
+    player.giveWeapon(Weapon::Type::MISSILE);
     player.id = players.size();
     player.controllerID = c.first;
 
@@ -41,7 +40,6 @@ PlayerSystem::PlayerSystem(
   player.position.x = 2200.f;
   player.id = players.size();
   player.controllerID = -1;
-  player.giveWeapon(Weapon::Type::GRENADE);
   players.push_back(player);
 
   EventManager::Register(Event::EXPLOSION,
@@ -51,7 +49,7 @@ PlayerSystem::PlayerSystem(
       std::bind(&PlayerSystem::onPowerupPickup, this, _1));
 }
 
-void PlayerSystem::update(float t, float dt)
+void PlayerSystem::update(double t, double dt)
 {
   for (auto& p : players) {
 
@@ -110,8 +108,8 @@ void PlayerSystem::update(float t, float dt)
     }
 
     // -------- Velocity --------
-    p.velocity += p.acceleration * dt;
-    glm::vec2 maxNewPosition = p.position + p.velocity * dt;
+    p.velocity += p.acceleration * (float)dt;
+    glm::vec2 maxNewPosition = p.position + p.velocity * (float)dt;
 
     float terrainAngle = terrain->getAngle(maxNewPosition.x);
     if (!p.airborne &&
@@ -120,7 +118,7 @@ void PlayerSystem::update(float t, float dt)
     }
 
     // -------- Position --------
-    glm::vec2 newPosition = p.position + p.velocity * dt;
+    glm::vec2 newPosition = p.position + p.velocity * (float)dt;
 
     if (!p.airborne) {
       if (abs(terrainAngle) > Player::MAX_DOWNHILL_ANGLE &&
@@ -205,6 +203,17 @@ void PlayerSystem::update(float t, float dt)
 	EventManager::Send(Event::PLAYER_DEATH, d);
 
 	Console::log() << red << "Player death";
+      }
+    }
+
+    // Grenade ammo regen
+    p.grenadeRefreshTimer -= dt;
+    if (p.grenadeRefreshTimer <= 0.0) {
+      p.grenadeRefreshTimer = 0.0;
+      Weapon& grenadeWeapon = p.weapons[0];
+      if (grenadeWeapon.ammo < grenadeWeapon.maxAmmo) {
+	grenadeWeapon.ammo++;
+	p.grenadeRefreshTimer = Player::GRENADE_REFRESH_TIMER;
       }
     }
   }
@@ -294,7 +303,10 @@ void PlayerSystem::fireWeapon(Player& p)
     p.firingBeam = true;
   }
 
-  currentWeapon.ammo--;
+  if (currentWeapon.type == Weapon::Type::GRENADE) {
+    currentWeapon.ammo--;
+    p.grenadeRefreshTimer = Player::GRENADE_REFRESH_TIMER;
+  }
 
   EvdPlayerFireWeapon d;
   d.player = p;

@@ -8,6 +8,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 
 #include "ResourceManager.hpp"
+#include "Console.hpp"
 
 Player::Player()
 {
@@ -24,12 +25,15 @@ Player::Player()
 
   // Init state
   health = STARTING_HEALTH;
+  grenadeRefreshTimer = 0.0;
 
   alive = true;
   airborne = false;
   jumpAvailable = true;
   outOfControl = false;
   firingBeam = false;
+
+  giveWeapon(Weapon::Type::GRENADE);
 }
 
 glm::vec2 Player::getCenterPosition() const
@@ -43,7 +47,11 @@ void Player::giveWeapon(const Weapon& n)
 {
   // Do nothing if player already has weapon of type
   for (const auto& w : weapons) {
-    if (w.type == n.type) return;
+    if (w.type == n.type) {
+      Console::log() << yellow <<
+	"Player already has weapon of type " << (int)n.type;
+      return;
+    } 
   }
 
   // Add weapon - sort weapon list by weapon type
@@ -52,4 +60,5 @@ void Player::giveWeapon(const Weapon& n)
       [](const Weapon& w, const Weapon& w2) -> bool {
       return w.type < w2.type;
       });
+
 }

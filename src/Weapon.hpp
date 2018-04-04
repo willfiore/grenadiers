@@ -13,5 +13,7 @@ struct Weapon
   Weapon(Type);
 
   Type type;
+
   int ammo;
+  int maxAmmo;
 };

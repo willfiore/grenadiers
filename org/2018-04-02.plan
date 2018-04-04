@@ -11,12 +11,12 @@
 + smooth aim direction rather than take directly from axes
 + missiles explode on contact with terrain
 + only allow detonation for grenades, while grenades are selected
++ fix knockback numbers for projectiles
++ ammo (allow infinite values for base wep, e.g grenades)
++ recharge nade ammo over time, only when no nades are live
 
 remember last aim direction
-fix knockback numbers for projectiles
 missiles explode on contact with player
 laser beam damages players
 block laser beam on terrain
 chargeup time for laser beam
-ammo (allow infinite values for base wep, e.g grenades)
-recharge nade ammo over time, only when no nades are live

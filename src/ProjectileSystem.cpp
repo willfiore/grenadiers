@@ -21,7 +21,7 @@ ProjectileSystem::ProjectileSystem(const Terrain* t) :
       std::bind(&ProjectileSystem::onPlayerSecondaryFireWeapon, this, _1));
 }
 
-void ProjectileSystem::update(float dt)
+void ProjectileSystem::update(double dt)
 {
   for (auto i = projectiles.begin(); i != projectiles.end();) {
     Projectile& p = *i;
@@ -32,8 +32,8 @@ void ProjectileSystem::update(float dt)
     }
 
     p.age += dt;
-    p.velocity += p.acceleration * dt;
-    glm::vec2 newPosition = p.position + p.velocity * dt;
+    p.velocity += p.acceleration * (float)dt;
+    glm::vec2 newPosition = p.position + p.velocity * (float)dt;
 
     if (p.dirty_justBounced) {
       p.dirty_justBounced = false;

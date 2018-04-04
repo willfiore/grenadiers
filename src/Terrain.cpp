@@ -91,7 +91,7 @@ std::vector<LineSegment> Terrain::getSegmentsInRange(float x1, float x2) const
   return ret;
 }
 
-void Terrain::update(float t, float dt) {
+void Terrain::update(double t, double dt) {
   points = basePoints;
 
   for (auto it = modifiers.begin(); it != modifiers.end();) {
@@ -112,8 +112,8 @@ void Terrain::update(float t, float dt) {
 }
 
 void Terrain::addFunc(
-    const std::function<float(float, float)>& func,
-    float lifetime)
+    const std::function<float(float, double)>& func,
+    double lifetime)
 {
   TerrainPointModifier m;
   m.lifetime = lifetime;
@@ -142,7 +142,7 @@ void Terrain::onExplosion(Event e)
    }
 
   // Wobble terrain
-  addFunc([=](float x, float t) -> float {
+  addFunc([=](float x, double t) -> float {
 
       float dt = t - e.timestamp;
 
@@ -157,5 +157,5 @@ void Terrain::onExplosion(Event e)
       float mx = glm::exp(-dx / 200.f);
 
       return r * mx * mt;
-      }, 4.f);
+      }, 4.0);
 }

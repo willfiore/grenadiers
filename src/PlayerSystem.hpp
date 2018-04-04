@@ -14,7 +14,7 @@ class PlayerSystem
 public:
   PlayerSystem(const Terrain*, const std::map<int, ControllerData>*);
 
-  void update(float t, float dt);
+  void update(double t, double dt);
   void processInput(int controllerID, int button, bool action);
 
   void jump(Player&);

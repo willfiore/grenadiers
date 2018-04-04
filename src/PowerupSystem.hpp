@@ -11,7 +11,7 @@ class PowerupSystem {
 public:
   PowerupSystem(const Terrain*, const PlayerSystem*);
 
-  void update(float dt);
+  void update(double dt);
   const std::vector<Powerup>& getPowerups() const { return powerups; }
 
 private:

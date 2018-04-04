@@ -28,6 +28,7 @@ private:
   // Window props
   int width;
   int height;
+  bool fullscreen;
   int multisamples;
   std::string name;
 

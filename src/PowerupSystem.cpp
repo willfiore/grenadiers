@@ -14,12 +14,12 @@ PowerupSystem::PowerupSystem(const Terrain* t, const PlayerSystem* p) :
   terrain(t),
   playerSystem(p)
 {
-  EventManager::Register(Event::GAME_START, [this](Event e) {
+  EventManager::Register(Event::GAME_START, [this](Event) {
       this->spawnPowerup();
       });
 }
 
-void PowerupSystem::update(float dt)
+void PowerupSystem::update(double dt)
 {
   for (auto it = powerups.begin(); it != powerups.end();) {
     auto& p = *it;

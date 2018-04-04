@@ -20,9 +20,10 @@ struct Player {
   static constexpr float MIN_SIDEJUMP_ANGLE = glm::radians(20.f);
   static constexpr float JUMP_VELOCITY = 1000.f;
   static constexpr float SIZE = 10.f;
-  static constexpr float STARTING_HEALTH = 1000.f;
+  static constexpr float STARTING_HEALTH = 300.f;
   static constexpr float AIM_SPEED = 22.f;
   static constexpr float AIM_SPEED_BEAM = 0.14f;
+  static constexpr double GRENADE_REFRESH_TIMER = 2.0;
 
   glm::vec2 getCenterPosition() const;
 
@@ -45,6 +46,8 @@ struct Player {
   float health;
   std::vector<Weapon> weapons;
   std::vector<Weapon>::size_type currentWeaponIndex;
+
+  double grenadeRefreshTimer;
 
   // Flags
   bool alive;

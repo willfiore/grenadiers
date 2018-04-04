@@ -16,6 +16,7 @@ void glfw_key_callback(GLFWwindow* window,
 Window::Window() :
   width(1366),
   height(768),
+  fullscreen(true),
   multisamples(16)
 {
   name = "Platformer";
@@ -27,7 +28,7 @@ Window::Window() :
   window = glfwCreateWindow(
       width, height,
       name.c_str(),
-      glfwGetPrimaryMonitor(),
+      fullscreen ? glfwGetPrimaryMonitor() : NULL,
       NULL
       );
 
