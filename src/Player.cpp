@@ -32,6 +32,7 @@ Player::Player()
   jumpAvailable = true;
   outOfControl = false;
   firingBeam = false;
+  lastMovingRight = true;
 
   giveWeapon(Weapon::Type::GRENADE);
 }

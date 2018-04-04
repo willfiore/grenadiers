@@ -9,6 +9,7 @@
 struct Player {
   Player();
 
+  static constexpr float MOVEMENT_DEADZONE = 0.4f;
   static constexpr float MAX_SPEED = 360.f;
   static constexpr float ACCEL_X = 10000.f;
   static constexpr float ACCEL_X_NOCONTROL = 1800.f;
@@ -22,7 +23,7 @@ struct Player {
   static constexpr float SIZE = 10.f;
   static constexpr float STARTING_HEALTH = 300.f;
   static constexpr float AIM_SPEED = 22.f;
-  static constexpr float AIM_SPEED_BEAM = 0.14f;
+  static constexpr float AIM_SPEED_BEAM = 0.f;
   static constexpr double GRENADE_REFRESH_TIMER = 2.0;
 
   glm::vec2 getCenterPosition() const;
@@ -55,6 +56,7 @@ struct Player {
   bool jumpAvailable;
   bool outOfControl;
   bool firingBeam;
+  bool lastMovingRight;
 
   // Dirty flags
   bool dirty_justLeftGround;

@@ -14,8 +14,8 @@
 + fix knockback numbers for projectiles
 + ammo (allow infinite values for base wep, e.g grenades)
 + recharge nade ammo over time, only when no nades are live
++ remember last aim direction
 
-remember last aim direction
 missiles explode on contact with player
 laser beam damages players
 block laser beam on terrain

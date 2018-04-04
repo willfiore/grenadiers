@@ -76,7 +76,8 @@ int main() {
 
   ResourceManager::LoadShader("base", "base.vert", "base.frag");
   ResourceManager::LoadShader("terrain", "terrain.vert", "terrain.frag");
-  ResourceManager::LoadShader("post", "post.vert", "post.frag");
+  ResourceManager::LoadShader("post", "screen.vert", "post.frag");
+  ResourceManager::LoadShader("blur", "screen.vert", "blur.frag");
   w.initShaders();
 
   // Controller setup

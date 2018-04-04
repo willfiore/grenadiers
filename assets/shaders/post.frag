@@ -3,9 +3,11 @@ out vec4 FragColor;
 in vec2 TexCoords;
 
 uniform sampler2D screenTexture;
+uniform sampler2D blurTexture;
 
 void main()
 {
-  vec4 col = texture(screenTexture, TexCoords);
-  FragColor = col;
+  vec3 col = texture(screenTexture, TexCoords).rgb;
+  vec3 bloom = texture(blurTexture, TexCoords).rgb;
+  FragColor = vec4(col + 0.5*bloom, 1.0);
 }

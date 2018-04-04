@@ -29,11 +29,11 @@ vec3 hsv2rgb(vec3 c)
 }
 
 void main() {
-  vec3 lightColor_hsv = vec3(0.0, 1.0, 0.7);
+  vec3 lightColor_hsv = vec3(0.79, 1.0, 0.7);
   vec3 lightColor = hsv2rgb(lightColor_hsv);
 
   vec3 norm = normalize(Normal);
-  vec3 lightDir = vec3(0.0, -1.0, 0.2);
+  vec3 lightDir = normalize(vec3(0.0, -1.0, 0.2));
 
   // Ambient
   float ambientStrength = 0.0;
@@ -48,12 +48,11 @@ void main() {
   vec3 result = ambient + diffuse;
 
   float marginSize = 8.f;
-  if (FragPos.z < 100.f - marginSize &&
-      FragPos.z > -100.f + marginSize)
-    result *= 0.1;
-
-  float modifier = 0.2 + 0.8 * (FragPos.z + 100)/200;
-    result *= modifier;
+  if (FragPos.z > 100.f - marginSize ||
+      FragPos.z < -100.f + marginSize)
+    result = lightColor;
+  else
+    result *= 0.2;
 
   FragColor = vec4(result, 1.0);
 }

@@ -34,8 +34,9 @@ private:
 
   // Render buffers
   unsigned int FBO, FBO_buffer; // Pre-post multisample framebuffer
-  unsigned int PFBO[2], PFBO_buffer[2]; // Post processing downsampled buffer
+  unsigned int PFBO[3], PFBO_buffer[3]; // Post processing downsampled buffer
   unsigned int VAO, VBO; // final quad to draw
 
   Shader shader_post;
+  Shader shader_blur;
 };

@@ -61,12 +61,29 @@ void PlayerSystem::update(double t, double dt)
 
     // Aiming
     ////////////////////////////////////////////////////
+    
+    // Deadzone
+    if (pow(axes[0], 2) + pow(axes[1], 2)
+	< pow(Player::MOVEMENT_DEADZONE, 2)) {
+      axes[0] = 0.f;
+      axes[1] = 0.f;
+    } else {
+      p.lastMovingRight = axes[0] > 0.f;
+    }
+
     float aimSpeed;
     if (!p.firingBeam) aimSpeed = Player::AIM_SPEED;
     else aimSpeed = Player::AIM_SPEED_BEAM;
 
     float currentAngle = p.aimDirection;
-    float targetAngle = glm::atan(axes[1], axes[0]);
+    float targetAngle;
+    if (axes[0] == 0.f && axes[1] == 0.f) {
+      targetAngle = -p.angle +
+	(int)!p.lastMovingRight * glm::pi<float>();
+    } else {
+      targetAngle = glm::atan(axes[1], axes[0]);
+    }
+
     float angleDiff = fabs(targetAngle - currentAngle);
     if (angleDiff > glm::pi<float>()) {
       if (targetAngle > currentAngle) currentAngle += glm::two_pi<float>();
