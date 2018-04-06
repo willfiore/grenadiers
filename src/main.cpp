@@ -24,12 +24,12 @@
 #include "TimescaleSystem.hpp"
 #include "CameraSystem.hpp"
 #include "PlayerSystem.hpp"
-#include "ProjectileSystem.hpp"
+#include "GrenadeSystem.hpp"
 #include "PowerupSystem.hpp"
 
 #include "Renderer/BaseRenderer.hpp"
 #include "Renderer/PlayerRenderer.hpp"
-#include "Renderer/ProjectileRenderer.hpp"
+#include "Renderer/GrenadeRenderer.hpp"
 #include "Renderer/TerrainRenderer.hpp"
 #include "Renderer/PowerupRenderer.hpp"
 #include "Renderer/BeamRenderer.hpp"
@@ -98,13 +98,13 @@ int main() {
 
   Terrain terrain;
   PlayerSystem playerSystem(&terrain, &controllers);
-  ProjectileSystem projectileSystem(&terrain);
+  GrenadeSystem grenadeSystem(&terrain);
   PowerupSystem powerupSystem(&terrain, &playerSystem);
   CameraSystem cameraSystem(&w, playerSystem.getPlayers());
 
   PlayerRenderer playerRenderer(&playerSystem);
   TerrainRenderer terrainRenderer(&terrain);
-  ProjectileRenderer projectileRenderer(&projectileSystem);
+  GrenadeRenderer grenadeRenderer(&grenadeSystem);
   PowerupRenderer powerupRenderer(&powerupSystem);
   BeamRenderer beamRenderer(&playerSystem);
 
@@ -175,7 +175,7 @@ int main() {
       timescaleSystem.update(t, dt);
 
       playerSystem.update(sim_t, sim_dt);
-      projectileSystem.update(sim_dt);
+      grenadeSystem.update(sim_dt);
       powerupSystem.update(sim_dt);
       terrain.update(sim_t, sim_dt);
 
@@ -205,7 +205,7 @@ int main() {
 
     terrainRenderer.draw();
     playerRenderer.draw();
-    projectileRenderer.draw();
+    grenadeRenderer.draw();
     powerupRenderer.draw();
     beamRenderer.draw();
 

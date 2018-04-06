@@ -131,7 +131,7 @@ void Window::render()
 
   bool horizontal = false;
   bool initial = true;
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 2; ++i) {
     shader_blur.setBool("horizontal", horizontal);
 
     glBindFramebuffer(GL_FRAMEBUFFER, PFBO[1+horizontal]);

@@ -32,6 +32,8 @@ struct EvdExplosion {
   float radius {0.f};
   float damage {0.f};
   float knockback {0.f};
+  float terrainDamageModifier {1.f};
+  float terrainWobbleModifier {1.f};
 };
 
 struct EvdPowerupPickup {
@@ -45,10 +47,8 @@ struct EvdPlayerDeath {
 
 struct EvdPlayerFireWeapon {
   Player player;
-  Weapon weapon;
 };
 
 struct EvdPlayerSecondaryFireWeapon {
   Player player;
-  Weapon weapon;
 };

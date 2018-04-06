@@ -95,6 +95,9 @@ glm::mat4 CameraSystem::getProjection() const
 
 void CameraSystem::onExplosion(Event e)
 {
+  EvdExplosion d = boost::any_cast<EvdExplosion>(e.data);
+  if (d.radius == 0.f) return;
+
   shakeAmplitude = 2.f;
   shakeStartTimestamp = e.timestamp;
 }

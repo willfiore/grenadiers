@@ -1,24 +1,24 @@
-#include "ProjectileRenderer.hpp"
+#include "GrenadeRenderer.hpp"
 
 #include <vector>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
 #include "../ResourceManager.hpp"
-#include "../ProjectileSystem.hpp"
+#include "../GrenadeSystem.hpp"
 
-ProjectileRenderer::ProjectileRenderer(const ProjectileSystem* p) :
-  projectileSystem(p)
+GrenadeRenderer::GrenadeRenderer(const GrenadeSystem* p) :
+  grenadeSystem(p)
 {
   shader = ResourceManager::GetShader("base");
 }
 
-void ProjectileRenderer::draw()
+void GrenadeRenderer::draw()
 {
   glBindVertexArray(sharedVAO);
   shader.use();
 
-  for (auto& p : projectileSystem->getProjectiles()) {
+  for (auto& p : grenadeSystem->getGrenades()) {
     glm::mat4 model = glm::mat4();
     model = glm::translate(model, glm::vec3(p.position, 0.f));
     model = glm::scale(model, glm::vec3(3.f, 3.f, 1.f));

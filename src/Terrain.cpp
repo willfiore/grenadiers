@@ -13,7 +13,7 @@
 #include "ResourceManager.hpp"
 
 Terrain::Terrain() :
-  maxDepth(-200.f),
+  maxDepth(-400.f),
   maxWidth(5000.f)
 {
   for (float i = 0.f; i < maxWidth; i += PRECISION) {
@@ -127,13 +127,15 @@ void Terrain::onExplosion(Event e)
 {
   auto d = boost::any_cast<EvdExplosion>(e.data);
 
+  if (d.radius == 0.f) return;
+
   // Deform terrain
   for (size_t i = 0; i < basePoints.size(); ++i) {
     glm::vec2& p = basePoints[i];
     
     float distance = glm::distance(d.position, p);
     if (distance < d.radius) {
-      p.y -= 0.3f * d.radius *
+      p.y -= 0.3f * d.terrainDamageModifier * d.radius *
         glm::cos( (distance / d.radius) * glm::half_pi<float>()) *
         (1 - (p.y / maxDepth));
 
@@ -147,7 +149,8 @@ void Terrain::onExplosion(Event e)
       float dt = t - e.timestamp;
 
       // Oscillate up and down over time
-      float r = 18.f * (glm::cos(15.f*dt + glm::half_pi<float>()));
+      float r = 10.f * d.terrainWobbleModifier *
+      glm::cos(15.f*dt + glm::half_pi<float>());
 
       // Fade out over time
       float mt = glm::exp(-3.5f*dt);

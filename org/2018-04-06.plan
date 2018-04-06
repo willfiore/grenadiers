@@ -1,0 +1,20 @@
+Idea for the 'gimmick': nade wars! Weapons are just different types of grenade.
+The game starts slow but as more powerups and grenade types are collected it
+becomes more chaotic.
+-------------------------------------------------------------------------------
+
+* remove missiles and beam weapons
+* refactor "projectile" -> "grenade"
+
+|||| Grenade types
+|||| -------------
+|||| - standard
+|||| - slowmo
+|||| - cluster
+|||| - build tower in terrain? will require climbing rework
+
+* add mix-and-match grenade properties
+* add cluster grenade, cluster fragments
+
+add slow-mo grenade field
+

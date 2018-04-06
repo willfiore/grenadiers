@@ -4,7 +4,6 @@
 
 #include "Random.hpp"
 #include "Player.hpp"
-#include "Weapon.hpp"
 #include "Terrain.hpp"
 #include "Powerup.hpp"
 #include "Joystick.hpp"
@@ -27,8 +26,6 @@ PlayerSystem::PlayerSystem(
     Player player;
     player.position.x = 2000.f + Random::randomFloat(0.f, 200.f);
 
-    player.giveWeapon(Weapon::Type::BEAM);
-    player.giveWeapon(Weapon::Type::MISSILE);
     player.id = players.size();
     player.controllerID = c.first;
 
@@ -222,17 +219,6 @@ void PlayerSystem::update(double t, double dt)
 	Console::log() << red << "Player death";
       }
     }
-
-    // Grenade ammo regen
-    p.grenadeRefreshTimer -= dt;
-    if (p.grenadeRefreshTimer <= 0.0) {
-      p.grenadeRefreshTimer = 0.0;
-      Weapon& grenadeWeapon = p.weapons[0];
-      if (grenadeWeapon.ammo < grenadeWeapon.maxAmmo) {
-	grenadeWeapon.ammo++;
-	p.grenadeRefreshTimer = Player::GRENADE_REFRESH_TIMER;
-      }
-    }
   }
 
   ImGui::Begin("Players", NULL, ImGuiWindowFlags_NoCollapse);
@@ -245,8 +231,6 @@ void PlayerSystem::update(double t, double dt)
 
     if(ImGui::CollapsingHeader(header_label.str().c_str(), flags)) {
       ImGui::Text("Health: %2.f", p.health);
-      ImGui::Text("Weapon: %u", (unsigned int)p.weapons[p.currentWeaponIndex].type);
-      ImGui::Text("Ammo: %i", p.weapons[p.currentWeaponIndex].ammo);
       ImGui::Text("Airborne: %i", p.airborne);
       ImGui::Text("Jump available: %i", p.jumpAvailable);
       ImGui::Text("Out of control: %i", p.outOfControl);
@@ -273,8 +257,6 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
 	fireWeapon(player); break;
       case JOY_BUTTON_LB:
 	secondaryFireWeapon(player); break;
-      case JOY_BUTTON_Y:
-	cycleWeapon(player); break;
       default: break;
     }
   }
@@ -282,8 +264,6 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
   // Release
   else {
     switch (button) {
-      case JOY_BUTTON_RB:
-	releaseWeapon(player); break;
       default: break;
     }
   }
@@ -306,67 +286,16 @@ void PlayerSystem::jump(Player& p)
 
 void PlayerSystem::fireWeapon(Player& p)
 {
-  // Can't fire if they have no weapons!
-  if (p.weapons.size() == 0) return;
-
-  Weapon& currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
-
-  if (currentWeapon.ammo <= 0) {
-    currentWeapon.ammo = 0;
-    return;
-  }
-
-  if (currentWeapon.type == Weapon::Type::BEAM) {
-    p.firingBeam = true;
-  }
-
-  if (currentWeapon.type == Weapon::Type::GRENADE) {
-    currentWeapon.ammo--;
-    p.grenadeRefreshTimer = Player::GRENADE_REFRESH_TIMER;
-  }
-
   EvdPlayerFireWeapon d;
   d.player = p;
-  d.weapon = currentWeapon;
   EventManager::Send(Event::PLAYER_FIRE_WEAPON, d);
-}
-
-void PlayerSystem::releaseWeapon(Player& p)
-{
-  if (p.weapons.size() == 0) return;
-
-  Weapon& currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
-
-  if (currentWeapon.type == Weapon::Type::BEAM) {
-    p.firingBeam = false;
-  }
-
-  EventManager::Send(Event::PLAYER_RELEASE_WEAPON);
 }
 
 void PlayerSystem::secondaryFireWeapon(Player& p)
 {
-  // Can't fire if they have no weapons!
-  if (p.weapons.size() == 0) return;
-
-  Weapon currentWeapon = *std::next(p.weapons.begin(), p.currentWeaponIndex);
-
   EvdPlayerSecondaryFireWeapon d;
   d.player = p;
-  d.weapon = currentWeapon;
   EventManager::Send(Event::PLAYER_SECONDARY_FIRE_WEAPON, d);
-}
-
-void PlayerSystem::cycleWeapon(Player& p)
-{
-  if (p.weapons.size() <= 1) return;
-
-  p.currentWeaponIndex++;
-
-  // Wrap
-  if(p.currentWeaponIndex >= p.weapons.size()) {
-    p.currentWeaponIndex = 0;
-  }
 }
 
 void PlayerSystem::onExplosion(Event e)

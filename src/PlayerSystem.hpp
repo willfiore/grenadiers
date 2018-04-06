@@ -19,9 +19,7 @@ public:
 
   void jump(Player&);
   void fireWeapon(Player&);
-  void releaseWeapon(Player&);
   void secondaryFireWeapon(Player&);
-  void cycleWeapon(Player&);
 
   const std::vector<Player>& getPlayers() const { return players; };
 

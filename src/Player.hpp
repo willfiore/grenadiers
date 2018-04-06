@@ -4,8 +4,6 @@
 #include <glm/vec2.hpp>
 #include <glm/glm.hpp>
 
-#include "Weapon.hpp"
-
 struct Player {
   Player();
 
@@ -28,8 +26,6 @@ struct Player {
 
   glm::vec2 getCenterPosition() const;
 
-  void giveWeapon(const Weapon&);
-
   // State
   //////////////////////////////////////////////
 
@@ -45,8 +41,6 @@ struct Player {
 
   // State
   float health;
-  std::vector<Weapon> weapons;
-  std::vector<Weapon>::size_type currentWeaponIndex;
 
   double grenadeRefreshTimer;
 
