@@ -7,7 +7,7 @@ class ProjectileSystem;
 class ProjectileRenderer : public BaseRenderer {
 public:
   ProjectileRenderer(const ProjectileSystem*);
-  virtual void draw() const override;
+  virtual void draw() override;
 
 private:
   const ProjectileSystem* projectileSystem;

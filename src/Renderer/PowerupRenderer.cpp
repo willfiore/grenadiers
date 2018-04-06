@@ -12,7 +12,7 @@ PowerupRenderer::PowerupRenderer(const PowerupSystem* p) :
   shader = ResourceManager::GetShader("base");
 }
 
-void PowerupRenderer::draw() const
+void PowerupRenderer::draw()
 {
   glBindVertexArray(sharedVAO);
   shader.use();

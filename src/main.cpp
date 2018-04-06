@@ -78,6 +78,7 @@ int main() {
   ResourceManager::LoadShader("terrain", "terrain.vert", "terrain.frag");
   ResourceManager::LoadShader("post", "screen.vert", "post.frag");
   ResourceManager::LoadShader("blur", "screen.vert", "blur.frag");
+  ResourceManager::LoadShader("bg_mesh", "terrain.vert", "bg_mesh.frag");
   w.initShaders();
 
   // Controller setup
@@ -189,6 +190,7 @@ int main() {
     // First pass
     glBindFramebuffer(GL_FRAMEBUFFER, w.getFBO());
     glEnable(GL_DEPTH_TEST);
+    glClearColor(0.4f, 0.f, 0.2f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Camera

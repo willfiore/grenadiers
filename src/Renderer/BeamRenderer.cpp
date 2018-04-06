@@ -13,7 +13,7 @@ BeamRenderer::BeamRenderer(const PlayerSystem* p) :
   shader = ResourceManager::GetShader("base");
 }
 
-void BeamRenderer::draw() const
+void BeamRenderer::draw()
 {
   glBindVertexArray(sharedVAO);
   shader.use();

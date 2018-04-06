@@ -14,7 +14,7 @@ PlayerRenderer::PlayerRenderer(const PlayerSystem* p) :
   shader = ResourceManager::GetShader("base");
 }
 
-void PlayerRenderer::draw() const
+void PlayerRenderer::draw()
 {
   glBindVertexArray(sharedVAO);
   shader.use();

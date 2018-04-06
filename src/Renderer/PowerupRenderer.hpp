@@ -7,7 +7,7 @@ class PowerupSystem;
 class PowerupRenderer : public BaseRenderer {
 public:
   PowerupRenderer(const PowerupSystem*);
-  virtual void draw() const override;
+  virtual void draw() override;
 
 private:
   const PowerupSystem* powerupSystem;

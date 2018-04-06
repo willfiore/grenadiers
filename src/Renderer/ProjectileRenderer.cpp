@@ -13,7 +13,7 @@ ProjectileRenderer::ProjectileRenderer(const ProjectileSystem* p) :
   shader = ResourceManager::GetShader("base");
 }
 
-void ProjectileRenderer::draw() const
+void ProjectileRenderer::draw()
 {
   glBindVertexArray(sharedVAO);
   shader.use();

@@ -8,6 +8,11 @@ double Random::randomDouble(double a, double b) {
   return distribution(generator);
 }
 
+float Random::randomFloat()
+{
+  return randomFloat(0.f, 1.f);
+}
+
 float Random::randomFloat(float a, float b) {
   std::uniform_real_distribution<float> distribution(a, b);
   return distribution(generator);

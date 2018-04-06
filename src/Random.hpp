@@ -7,6 +7,7 @@ public:
   Random();
 
   static double randomDouble(double a, double b);
+  static float randomFloat();
   static float randomFloat(float a, float b);
   static int randomInt(int a, int b);
 

@@ -9,14 +9,18 @@ class TerrainRenderer : public BaseRenderer
 {
 public:
   TerrainRenderer(const Terrain*);
-  virtual void draw() const override;
+  virtual void draw() override;
 private:
   const Terrain* terrain;
   float depth;
 
   GLuint VAO;
   GLuint VBO;
-  std::vector<glm::vec2> verts;
+  GLuint EBO;
+
+  std::vector<glm::vec3> verts;
+  std::vector<glm::vec3> normals;
+  std::vector<unsigned int> indices;
 
   Shader shader;
 };

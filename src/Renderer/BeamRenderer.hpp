@@ -7,7 +7,7 @@ class PlayerSystem;
 class BeamRenderer : public BaseRenderer {
 public:
   BeamRenderer(const PlayerSystem*);
-  virtual void draw() const override;
+  virtual void draw() override;
 
 private:
   const PlayerSystem* playerSystem;

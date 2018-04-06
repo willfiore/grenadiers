@@ -87,7 +87,7 @@ glm::mat4 CameraSystem::getProjection() const
   glm::mat4 projection = glm::perspective(
       glm::radians(fov),
       (float)window->getWidth() / (float)window->getHeight(),
-      0.01f, 10000.f
+      10.f, 10000.f
       );
 
   return projection;
