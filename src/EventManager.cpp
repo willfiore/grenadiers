@@ -5,7 +5,7 @@
 // Statics
 double EventManager::time;
 
-std::map<Event::Type, std::vector<std::function<void(Event)> > >
+std::map<Event::Type, std::vector<std::function<void(const Event&)> > >
 EventManager::funcs;
 
 void EventManager::Update(double t, double)
@@ -13,7 +13,7 @@ void EventManager::Update(double t, double)
   time = t;
 }
 
-void EventManager::Register(Event::Type type, std::function<void(Event)> func)
+void EventManager::Register(Event::Type type, std::function<void(const Event&)> func)
 {
   funcs[type].push_back(func);
 }

@@ -4,8 +4,7 @@
 #include <glm/matrix.hpp>
 #include <glm/vec2.hpp>
 
-#include "Event.hpp"
-
+struct Event;
 class Window;
 struct Player;
 
@@ -31,5 +30,5 @@ private:
   
   const std::vector<Player>& players;
 
-  void onExplosion(Event);
+  void onExplosion(const Event&);
 };

@@ -15,7 +15,6 @@ GrenadeRenderer::GrenadeRenderer(const GrenadeSystem* p) :
 
 void GrenadeRenderer::draw()
 {
-  glBindVertexArray(sharedVAO);
   shader.use();
 
   for (auto& p : grenadeSystem->getGrenades()) {
@@ -25,8 +24,6 @@ void GrenadeRenderer::draw()
 
     shader.setMat4("model", model);
 
-    glDrawArrays(GL_TRIANGLES, VERTS_BEGIN_QUAD, 6);
+    drawPrimitive(Primitive::QUAD);
   }
-
-  glBindVertexArray(0);
 }

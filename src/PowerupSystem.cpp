@@ -31,12 +31,6 @@ void PowerupSystem::update(double dt)
 
       if (p.position.y < terrain->getHeight(p.position.x)) {
 	p.landed = true;
-	
-	EvdExplosion d;
-	d.position = p.position;
-	d.radius = 100.f;
-	d.damage = 0.f;
-	EventManager::Send(Event::EXPLOSION, d);
       }
     }
 

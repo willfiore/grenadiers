@@ -3,13 +3,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+#include "EventManager.hpp"
 #include "Random.hpp"
 #include "Window.hpp"
-#include "EventManager.hpp"
 #include "PlayerSystem.hpp"
 #include "ResourceManager.hpp"
 
 #include <numeric>
+#include "Grenade.hpp"
 
 CameraSystem::CameraSystem(const Window* w, const std::vector<Player>& p) :
   window(w),
@@ -93,10 +94,10 @@ glm::mat4 CameraSystem::getProjection() const
   return projection;
 }
 
-void CameraSystem::onExplosion(Event e)
+void CameraSystem::onExplosion(const Event& e)
 {
-  EvdExplosion d = boost::any_cast<EvdExplosion>(e.data);
-  if (d.radius == 0.f) return;
+  auto g = boost::any_cast<EvdGrenadeExplosion>(e.data).grenade;
+  if (g->properties.radius == 0.f) return;
 
   shakeAmplitude = 2.f;
   shakeStartTimestamp = e.timestamp;

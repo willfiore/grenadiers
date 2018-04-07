@@ -22,9 +22,8 @@ Player::Player()
   angle = 0.f;
   aimDirection = 0.f;
 
-  // Init state
+  // Initial state
   health = STARTING_HEALTH;
-  grenadeRefreshTimer = 0.0;
 
   alive = true;
   airborne = false;

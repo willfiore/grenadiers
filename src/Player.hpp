@@ -33,6 +33,7 @@ struct Player {
   int controllerID;
 
   // Physics
+  double localTimescale;
   glm::vec2 position;
   glm::vec2 velocity;
   glm::vec2 acceleration;
@@ -41,8 +42,6 @@ struct Player {
 
   // State
   float health;
-
-  double grenadeRefreshTimer;
 
   // Flags
   bool alive;

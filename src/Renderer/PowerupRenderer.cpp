@@ -14,7 +14,6 @@ PowerupRenderer::PowerupRenderer(const PowerupSystem* p) :
 
 void PowerupRenderer::draw()
 {
-  glBindVertexArray(sharedVAO);
   shader.use();
 
   for (auto p : powerupSystem->getPowerups()) {
@@ -25,8 +24,6 @@ void PowerupRenderer::draw()
 
     shader.setMat4("model", model);
 
-    glDrawArrays(GL_TRIANGLES, VERTS_BEGIN_QUAD, 6);
+    drawPrimitive(Primitive::QUAD);
   }
-
-  glBindVertexArray(0);
 }

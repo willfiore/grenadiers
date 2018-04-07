@@ -15,7 +15,6 @@ BeamRenderer::BeamRenderer(const PlayerSystem* p) :
 
 void BeamRenderer::draw()
 {
-  glBindVertexArray(sharedVAO);
   shader.use();
 
   for (const auto& p : playerSystem->getPlayers()) {
@@ -31,8 +30,6 @@ void BeamRenderer::draw()
 
     shader.setMat4("model", model);
 
-    glDrawArrays(GL_TRIANGLES, VERTS_BEGIN_QUAD, 6);
+    drawPrimitive(Primitive::QUAD);
   }
-
-  glBindVertexArray(0);
 }

@@ -8,6 +8,7 @@ struct Grenade
     STANDARD,
     CLUSTER,
     CLUSTER_FRAGMENT,
+    INERTIA,
     TYPE_COUNT
   };
 
@@ -16,7 +17,8 @@ struct Grenade
 
   Type type;
   int owner;
-  float age;
+  double age;
+  double localTimescale;
 
   glm::vec2 position;
   glm::vec2 velocity;
@@ -28,7 +30,7 @@ struct Grenade
   // Properties
   struct {
 
-    float lifetime;
+    double lifetime;
     float knockback;
     float damage;
     float radius;
@@ -37,6 +39,7 @@ struct Grenade
 
     bool manualDetonate;
     bool detonateOnLand;
+    bool slowBeforeDetonate;
     int numClusterFragments;
 
   } properties;

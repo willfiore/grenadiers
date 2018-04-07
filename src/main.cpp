@@ -21,6 +21,8 @@
 #include "Terrain.hpp"
 #include "Player.hpp"
 
+#include "EventManager.hpp"
+
 #include "TimescaleSystem.hpp"
 #include "CameraSystem.hpp"
 #include "PlayerSystem.hpp"
@@ -33,6 +35,7 @@
 #include "Renderer/TerrainRenderer.hpp"
 #include "Renderer/PowerupRenderer.hpp"
 #include "Renderer/BeamRenderer.hpp"
+#include "Renderer/TimescaleZoneRenderer.hpp"
 
 int main() {
 
@@ -79,6 +82,7 @@ int main() {
   ResourceManager::LoadShader("post", "screen.vert", "post.frag");
   ResourceManager::LoadShader("blur", "screen.vert", "blur.frag");
   ResourceManager::LoadShader("bg_mesh", "terrain.vert", "bg_mesh.frag");
+  ResourceManager::LoadShader("inertia_zone", "base.vert", "inertia_zone.frag");
   w.initShaders();
 
   // Controller setup
@@ -97,8 +101,8 @@ int main() {
   TimescaleSystem timescaleSystem;
 
   Terrain terrain;
-  PlayerSystem playerSystem(&terrain, &controllers);
-  GrenadeSystem grenadeSystem(&terrain);
+  PlayerSystem playerSystem(terrain, controllers, timescaleSystem);
+  GrenadeSystem grenadeSystem(terrain, timescaleSystem);
   PowerupSystem powerupSystem(&terrain, &playerSystem);
   CameraSystem cameraSystem(&w, playerSystem.getPlayers());
 
@@ -107,6 +111,7 @@ int main() {
   GrenadeRenderer grenadeRenderer(&grenadeSystem);
   PowerupRenderer powerupRenderer(&powerupSystem);
   BeamRenderer beamRenderer(&playerSystem);
+  TimescaleZoneRenderer timescaleZoneRenderer(timescaleSystem);
 
   // Create main VAO, VBO, for base geometry
   BaseRenderer::InitSharedVertexData();
@@ -138,7 +143,7 @@ int main() {
     if (accumulator >= dt) {
       accumulator -= dt;
 
-      double sim_dt = timescaleSystem.getTimescale() * dt;
+      double sim_dt = timescaleSystem.getGlobalTimescale() * dt;
       sim_t += sim_dt;
 
       // Player input
@@ -174,10 +179,10 @@ int main() {
       EventManager::Update(sim_t, sim_dt);
       timescaleSystem.update(t, dt);
 
-      playerSystem.update(sim_t, sim_dt);
       grenadeSystem.update(sim_dt);
       powerupSystem.update(sim_dt);
       terrain.update(sim_t, sim_dt);
+      playerSystem.update(sim_t, sim_dt);
 
       // Camera movement
       cameraSystem.update(sim_t, sim_dt);
@@ -190,7 +195,7 @@ int main() {
     // First pass
     glBindFramebuffer(GL_FRAMEBUFFER, w.getFBO());
     glEnable(GL_DEPTH_TEST);
-    glClearColor(0.4f, 0.f, 0.2f, 0.f);
+    glClearColor(0.6f, 0.1f, 0.0f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Camera
@@ -208,6 +213,7 @@ int main() {
     grenadeRenderer.draw();
     powerupRenderer.draw();
     beamRenderer.draw();
+    timescaleZoneRenderer.draw();
 
     // --------------------------------
     // Finished rendering scene

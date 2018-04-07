@@ -2,6 +2,7 @@
 
 #include <utility>
 #include <glm/vec2.hpp>
+#include <limits>
 
 typedef std::pair<glm::vec2, glm::vec2> LineSegment;
 
@@ -17,4 +18,9 @@ namespace geo {
   std::pair<bool, glm::vec2> intersect(glm::vec2, glm::vec2, glm::vec2, glm::vec2);
 
   float cross(glm::vec2, glm::vec2);
+
+  template <typename T>
+    T inf() {
+      return std::numeric_limits<T>::infinity();
+    }
 }

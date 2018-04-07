@@ -1,18 +1,24 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include "ControllerData.hpp"
 
 #include "Player.hpp"
-#include "EventManager.hpp"
 
 class Terrain;
 class ProjectileSystem;
+class TimescaleSystem;
+struct Event;
 
 class PlayerSystem
 {
 public:
-  PlayerSystem(const Terrain*, const std::map<int, ControllerData>*);
+  PlayerSystem(
+      const Terrain&,
+      const std::map<int, ControllerData>&,
+      const TimescaleSystem&
+      );
 
   void update(double t, double dt);
   void processInput(int controllerID, int button, bool action);
@@ -26,9 +32,10 @@ public:
 private:
   std::vector<Player> players;
 
-  const Terrain* terrain;
-  const std::map<int, ControllerData>* controllers;
+  const Terrain& terrain;
+  const std::map<int, ControllerData>& controllers;
+  const TimescaleSystem& timescaleSystem;
 
-  void onExplosion(Event);
-  void onPowerupPickup(Event);
+  void onExplosion(const Event&);
+  void onPowerupPickup(const Event&);
 };

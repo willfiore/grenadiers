@@ -11,9 +11,23 @@ public:
 
   static void InitSharedVertexData();
 protected:
-  const static GLint VERTS_BEGIN_QUAD = 0;
-  const static GLint VERTS_BEGIN_LINE = 6;
+  enum class Primitive {
+    QUAD,
+    LINE,
+    CIRCLE
+  };
+
+  void drawPrimitive(Primitive);
+
+private:
+  const GLuint BEGIN_QUAD = 0;
+  const GLuint SIZE_QUAD = 6;
+  const GLuint BEGIN_LINE = 6;
+  const GLuint SIZE_LINE = 2;
+  const GLuint BEGIN_CIRCLE = 8;
+  const GLuint SIZE_CIRCLE = 100*3;
 
   static GLuint sharedVAO;
   static GLuint sharedVBO;
+  static GLuint sharedEBO;
 };

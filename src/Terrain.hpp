@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <deque>
 #include <functional>
 #include <glm/vec2.hpp>
 #include "geo.hpp"
@@ -19,6 +20,7 @@ public:
   Terrain();
 
   static constexpr float PRECISION = 45.f;
+  static constexpr float MAX_MODIFIERS = 4.f;
 
   float getMaxDepth() const { return maxDepth; }
   float getMaxWidth() const { return maxWidth; }
@@ -40,6 +42,6 @@ private:
   float maxWidth;
 
   std::vector<glm::vec2> basePoints;
-  std::vector<TerrainPointModifier> modifiers;
+  std::deque<TerrainPointModifier> modifiers;
   std::vector<glm::vec2> points;
 };

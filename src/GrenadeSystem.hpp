@@ -3,21 +3,22 @@
 #include <vector>
 
 #include "Grenade.hpp"
-#include "Event.hpp"
 
+struct Event;
 class Terrain;
+class TimescaleSystem;
 
 class GrenadeSystem {
 public:
-  GrenadeSystem(const Terrain*);
+  GrenadeSystem(const Terrain&, const TimescaleSystem&);
 
   void update(double dt);
   const std::vector<Grenade>& getGrenades() const { return grenades; }
 
 private:
 
-  void onPlayerFireWeapon(Event);
-  void onPlayerSecondaryFireWeapon(Event);
+  void onPlayerFireWeapon(const Event&);
+  void onPlayerSecondaryFireWeapon(const Event&);
 
   void grenadeHitGround(Grenade&, glm::vec2);
   void explodeGrenade(Grenade&);
@@ -26,5 +27,7 @@ private:
 
   std::vector<Grenade> grenades;
   std::vector<Grenade> grenadesToSpawn;
-  const Terrain* terrain;
+
+  const Terrain& terrain;
+  const TimescaleSystem& timescaleSystem;
 };

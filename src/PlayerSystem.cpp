@@ -2,9 +2,12 @@
 
 #include <glm/glm.hpp>
 
+#include "EventManager.hpp"
 #include "Random.hpp"
 #include "Player.hpp"
+#include "Grenade.hpp"
 #include "Terrain.hpp"
+#include "TimescaleSystem.hpp"
 #include "Powerup.hpp"
 #include "Joystick.hpp"
 #include "geo.hpp"
@@ -17,12 +20,14 @@
 #include <iostream>
 
 PlayerSystem::PlayerSystem(
-    const Terrain* t,
-    const std::map<int, ControllerData>* c) :
+    const Terrain& t,
+    const std::map<int, ControllerData>& c,
+    const TimescaleSystem& ts) :
   terrain(t),
-  controllers(c)
+  controllers(c),
+  timescaleSystem(ts)
 {
-  for (const auto& c : *controllers) {
+  for (const auto& c : controllers) {
     Player player;
     player.position.x = 2000.f + Random::randomFloat(0.f, 200.f);
 
@@ -46,14 +51,19 @@ PlayerSystem::PlayerSystem(
       std::bind(&PlayerSystem::onPowerupPickup, this, _1));
 }
 
-void PlayerSystem::update(double t, double dt)
+void PlayerSystem::update(double t, double gdt)
 {
   for (auto& p : players) {
+    double newTimescale = timescaleSystem.getTimescaleAtPosition(p.position);
+    double inertia = newTimescale < p.localTimescale ? 0.3 : 0.1;
+    p.localTimescale += inertia *
+      (timescaleSystem.getTimescaleAtPosition(p.position) - p.localTimescale);
+    double dt = p.localTimescale * gdt;
 
     std::vector<float> axes(6, 0.0f);
 
     if (p.controllerID != -1) {
-      axes = controllers->at(p.controllerID).axes;
+      axes = controllers.at(p.controllerID).axes;
     }
 
     // Aiming
@@ -125,7 +135,7 @@ void PlayerSystem::update(double t, double dt)
     p.velocity += p.acceleration * (float)dt;
     glm::vec2 maxNewPosition = p.position + p.velocity * (float)dt;
 
-    float terrainAngle = terrain->getAngle(maxNewPosition.x);
+    float terrainAngle = terrain.getAngle(maxNewPosition.x);
     if (!p.airborne &&
 	glm::sign(terrainAngle) == glm::sign(p.velocity.x)) {
       p.velocity *= glm::cos(terrainAngle);
@@ -142,14 +152,14 @@ void PlayerSystem::update(double t, double dt)
       }
       else {
 	p.position = newPosition;
-	p.position.y = terrain->getHeight(newPosition.x);
+	p.position.y = terrain.getHeight(newPosition.x);
       }
     }
 
     if (p.airborne) {
       if (!p.dirty_justLeftGround) {
 	std::vector<LineSegment> tSegments =
-	  terrain->getSegmentsInRange(p.position.x, newPosition.x);
+	  terrain.getSegmentsInRange(p.position.x, newPosition.x);
 
 	bool foundIntersection = false;
 	for (auto& s : tSegments) {
@@ -172,8 +182,8 @@ void PlayerSystem::update(double t, double dt)
 
 	// Failsafe
 	if (!foundIntersection && newPosition.y <
-	    terrain->getHeight(newPosition.x))
-	  newPosition.y = terrain->getHeight(newPosition.x);
+	    terrain.getHeight(newPosition.x))
+	  newPosition.y = terrain.getHeight(newPosition.x);
       } else {
 	p.dirty_justLeftGround = false;
       }
@@ -182,7 +192,7 @@ void PlayerSystem::update(double t, double dt)
     }
 
     // World boundary
-    float terrainMaxWidth = terrain->getMaxWidth();
+    float terrainMaxWidth = terrain.getMaxWidth();
     if (p.position.x - Player::SIZE < 0)
       p.position.x = Player::SIZE;
     else if (p.position.x + Player::SIZE > terrainMaxWidth)
@@ -191,7 +201,7 @@ void PlayerSystem::update(double t, double dt)
     // -------- Angle --------
     float goalAngle = terrainAngle;
 
-    float terrainHeight = terrain->getHeight(p.position.x);
+    float terrainHeight = terrain.getHeight(p.position.x);
     float heightModifier = (p.position.y - terrainHeight) / 220.f;
     if (heightModifier < 0.f) heightModifier = 0.f;
     if (heightModifier > 1.f) heightModifier = 1.f;
@@ -213,7 +223,7 @@ void PlayerSystem::update(double t, double dt)
 	p.alive = false;
 
 	EvdPlayerDeath d;
-	d.player = p;
+	d.player = &p;
 	EventManager::Send(Event::PLAYER_DEATH, d);
 
 	Console::log() << red << "Player death";
@@ -273,7 +283,7 @@ void PlayerSystem::jump(Player& p)
 {
   if (!p.jumpAvailable || p.outOfControl || p.firingBeam) return;
 
-  float terrainAngle = terrain->getAngle(p.position.x);
+  float terrainAngle = terrain.getAngle(p.position.x);
 
   p.velocity.y = Player::JUMP_VELOCITY;
   if (abs(terrainAngle) > Player::MIN_SIDEJUMP_ANGLE) {
@@ -287,32 +297,33 @@ void PlayerSystem::jump(Player& p)
 void PlayerSystem::fireWeapon(Player& p)
 {
   EvdPlayerFireWeapon d;
-  d.player = p;
+  d.player = &p;
   EventManager::Send(Event::PLAYER_FIRE_WEAPON, d);
 }
 
 void PlayerSystem::secondaryFireWeapon(Player& p)
 {
   EvdPlayerSecondaryFireWeapon d;
-  d.player = p;
+  d.player = &p;
   EventManager::Send(Event::PLAYER_SECONDARY_FIRE_WEAPON, d);
 }
 
-void PlayerSystem::onExplosion(Event e)
+void PlayerSystem::onExplosion(const Event& e)
 {
-  auto d = boost::any_cast<EvdExplosion>(e.data);
+  const auto* g = boost::any_cast<EvdGrenadeExplosion>(e.data).grenade;
 
   for (auto& p : players) {
-    glm::vec2 diff = p.position - d.position;
+    glm::vec2 diff = p.position - g->position;
     float dist = glm::length(diff);
 
-    if (dist > d.radius) continue;
+    if (dist > g->properties.radius) continue;
 
     // Damage falloff
-    float damage = d.damage * (1 - glm::pow((dist / d.radius), 0.74f));
+    float damage = g->properties.damage * 
+      (1 - glm::pow((dist / g->properties.radius), 0.74f));
 
-    if (damage < 0.1*d.damage)
-      damage = 0.1 * d.damage;
+    if (damage < 0.1*g->properties.damage)
+      damage = 0.1 * g->properties.damage;
 
     p.health -= damage;
 
@@ -322,10 +333,12 @@ void PlayerSystem::onExplosion(Event e)
 
     glm::vec2 launchVelocity;
 
-    launchVelocity.x = d.knockback * glm::pow( (d.radius-dist)/d.radius, 0.5);
+    launchVelocity.x = g->properties.knockback * 
+      glm::pow( (g->properties.radius-dist)/g->properties.radius, 0.5);
     launchVelocity.x *= glm::sign(diff.x);
 
-    launchVelocity.y = d.knockback * glm::pow( (d.radius-dist)/d.radius, 0.5);
+    launchVelocity.y = g->properties.knockback *
+      glm::pow( (g->properties.radius-dist)/g->properties.radius, 0.5);
 
     // If we are very close in x, launch more upwards
     if (glm::abs(diff.x) < 1.5f * Player::SIZE) {
@@ -337,7 +350,7 @@ void PlayerSystem::onExplosion(Event e)
   }
 }
 
-void PlayerSystem::onPowerupPickup(Event e)
+void PlayerSystem::onPowerupPickup(const Event& e)
 {
   auto d = boost::any_cast<EvdPowerupPickup>(e.data);
 

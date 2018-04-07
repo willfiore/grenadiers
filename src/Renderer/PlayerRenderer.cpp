@@ -16,7 +16,6 @@ PlayerRenderer::PlayerRenderer(const PlayerSystem* p) :
 
 void PlayerRenderer::draw()
 {
-  glBindVertexArray(sharedVAO);
   shader.use();
   
   for (const auto p : playerSystem->getPlayers()) {
@@ -31,7 +30,7 @@ void PlayerRenderer::draw()
     model = glm::translate(model, glm::vec3({0.f, 1.f, 0.f}));
     shader.setMat4("model", model);
 
-    glDrawArrays(GL_TRIANGLES, VERTS_BEGIN_QUAD, 6);
+    drawPrimitive(Primitive::QUAD);
 
     // Draw aim direction
     model = glm::mat4();
@@ -39,8 +38,6 @@ void PlayerRenderer::draw()
     model = glm::rotate(model, -p.aimDirection, {0.f, 0.f, 1.f});
     model = glm::scale(model, {2*Player::SIZE, 1.f, 1.f});
     shader.setMat4("model", model);
-    glDrawArrays(GL_LINES, VERTS_BEGIN_LINE, 2);
+    drawPrimitive(Primitive::LINE);
   }
-
-  glBindVertexArray(0);
 }

@@ -11,6 +11,7 @@
 
 #include "EventManager.hpp"
 #include "ResourceManager.hpp"
+#include "Grenade.hpp"
 
 Terrain::Terrain() :
   maxDepth(-400.f),
@@ -94,20 +95,18 @@ std::vector<LineSegment> Terrain::getSegmentsInRange(float x1, float x2) const
 void Terrain::update(double t, double dt) {
   points = basePoints;
 
-  for (auto it = modifiers.begin(); it != modifiers.end();) {
-    auto& m = *it;
+  // Remove old modifiers
+  modifiers.erase(std::remove_if(modifiers.begin(), modifiers.end(),
+	[](const TerrainPointModifier& m) -> bool {
+	return m.age > m.lifetime;
+	}), modifiers.end());
 
+  for (auto& m : modifiers) {
     m.age += dt;
-    if (m.age > m.lifetime) {
-      modifiers.erase(it);
-      continue;
-    }
 
     for (auto& p : points) {
       p.y += m.func(p.x, t);
     }
-
-    ++it;
   }
 }
 
@@ -115,6 +114,10 @@ void Terrain::addFunc(
     const std::function<float(float, double)>& func,
     double lifetime)
 {
+  while (modifiers.size() > MAX_MODIFIERS) {
+    modifiers.pop_front();
+  }
+
   TerrainPointModifier m;
   m.lifetime = lifetime;
   m.age = 0.0f;
@@ -125,18 +128,18 @@ void Terrain::addFunc(
 
 void Terrain::onExplosion(Event e)
 {
-  auto d = boost::any_cast<EvdExplosion>(e.data);
+  const auto* g = boost::any_cast<EvdGrenadeExplosion>(e.data).grenade;
 
-  if (d.radius == 0.f) return;
+  if (g->properties.radius == 0.f) return;
 
   // Deform terrain
   for (size_t i = 0; i < basePoints.size(); ++i) {
     glm::vec2& p = basePoints[i];
     
-    float distance = glm::distance(d.position, p);
-    if (distance < d.radius) {
-      p.y -= 0.3f * d.terrainDamageModifier * d.radius *
-        glm::cos( (distance / d.radius) * glm::half_pi<float>()) *
+    float distance = glm::distance(g->position, p);
+    if (distance < g->properties.radius) {
+      p.y -= 0.3f * g->properties.terrainDamageModifier * g->properties.radius *
+        glm::cos( (distance / g->properties.radius) * glm::half_pi<float>()) *
         (1 - (p.y / maxDepth));
 
        if (p.y < maxDepth) p.y = maxDepth;
@@ -149,14 +152,14 @@ void Terrain::onExplosion(Event e)
       float dt = t - e.timestamp;
 
       // Oscillate up and down over time
-      float r = 10.f * d.terrainWobbleModifier *
+      float r = 10.f * g->properties.terrainWobbleModifier *
       glm::cos(15.f*dt + glm::half_pi<float>());
 
       // Fade out over time
       float mt = glm::exp(-3.5f*dt);
 
       // Fade out over distance
-      float dx = glm::abs(x - d.position.x);
+      float dx = glm::abs(x - g->position.x);
       float mx = glm::exp(-dx / 200.f);
 
       return r * mx * mt;

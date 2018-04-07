@@ -7,13 +7,15 @@
 #include "imgui.h"
 #include "Console.hpp"
 
-#include "Terrain.hpp"
 #include "EventManager.hpp"
+#include "Terrain.hpp"
+#include "TimescaleSystem.hpp"
 #include "Player.hpp"
 #include "Random.hpp"
 
-GrenadeSystem::GrenadeSystem(const Terrain* t) :
-  terrain(t)
+GrenadeSystem::GrenadeSystem(const Terrain& t, const TimescaleSystem& ts) :
+  terrain(t),
+  timescaleSystem(ts)
 {
   EventManager::Register(Event::PLAYER_FIRE_WEAPON,
       std::bind(&GrenadeSystem::onPlayerFireWeapon, this, _1));
@@ -22,7 +24,7 @@ GrenadeSystem::GrenadeSystem(const Terrain* t) :
       std::bind(&GrenadeSystem::onPlayerSecondaryFireWeapon, this, _1));
 }
 
-void GrenadeSystem::update(double dt)
+void GrenadeSystem::update(double gdt)
 {
   // Remove dead grenades
   grenades.erase(std::remove_if(grenades.begin(), grenades.end(),
@@ -36,13 +38,27 @@ void GrenadeSystem::update(double dt)
   grenadesToSpawn.clear();
 
   for (auto& g : grenades) {
+    double newTimescale = timescaleSystem.getTimescaleAtPosition(g.position);
+    double inertia = newTimescale < g.localTimescale ? 0.3 : 0.03;
+    g.localTimescale += inertia * 
+      (timescaleSystem.getTimescaleAtPosition(g.position) - g.localTimescale);
+    double dt = g.localTimescale * gdt;
+
     g.age += dt;
 
     // ------------
     // Physics
     // ------------
 
+    if (g.properties.slowBeforeDetonate &&
+	g.properties.lifetime - g.age < 0.5) {
+      double slowFactor = glm::pow(2*(g.properties.lifetime - g.age), 2);
+      if (slowFactor < 0.05) slowFactor = 0.05;
+      dt *= slowFactor;
+    }
+
     g.velocity += g.acceleration * (float)dt;
+
     glm::vec2 newPosition = g.position + g.velocity * (float)dt;
 
     if (g.dirty_justBounced) {
@@ -50,7 +66,7 @@ void GrenadeSystem::update(double dt)
     }
     else {
       std::vector<LineSegment> tSegments =
-	terrain->getSegmentsInRange(g.position.x, newPosition.x);
+	terrain.getSegmentsInRange(g.position.x, newPosition.x);
 
       bool foundIntersection = false;
       for (auto& s : tSegments) {
@@ -70,8 +86,8 @@ void GrenadeSystem::update(double dt)
 
       // Failsafe
       if (!foundIntersection &&
-	  newPosition.y < terrain->getHeight(newPosition.x)) {
-	newPosition.y = terrain->getHeight(newPosition.x);
+	  newPosition.y < terrain.getHeight(newPosition.x)) {
+	newPosition.y = terrain.getHeight(newPosition.x);
 	grenadeHitGround(g, newPosition);
       }
     }
@@ -81,8 +97,7 @@ void GrenadeSystem::update(double dt)
     // -------------
     // Timer explode
     // -------------
-    if (g.properties.lifetime &&
-	g.age >= g.properties.lifetime) {
+    if (g.age >= g.properties.lifetime) {
       explodeGrenade(g);
     }
   }
@@ -95,7 +110,7 @@ void GrenadeSystem::grenadeHitGround(Grenade& g, glm::vec2 pos)
     return;
   }
 
-  float terrainAngle = terrain->getAngle(g.position.x);
+  float terrainAngle = terrain.getAngle(g.position.x);
   float grenadeAngle = glm::atan(g.velocity.y, g.velocity.x);
   float rotateAngle = 2 * (terrainAngle - grenadeAngle);
   g.velocity = 0.5f * glm::rotate(g.velocity, rotateAngle);
@@ -106,13 +121,8 @@ void GrenadeSystem::explodeGrenade(Grenade& g)
 {
   g.dirty_awaitingRemoval = true;
 
-  EvdExplosion d;
-  d.position = g.position;
-  d.damage = g.properties.damage;
-  d.radius = g.properties.radius;
-  d.knockback = g.properties.knockback;
-  d.terrainDamageModifier = g.properties.terrainDamageModifier;
-  d.terrainWobbleModifier = g.properties.terrainWobbleModifier;
+  EvdGrenadeExplosion d;
+  d.grenade = &g;
   EventManager::Send(Event::EXPLOSION, d);
 
   for (int i = 0; i < g.properties.numClusterFragments; ++i) {
@@ -124,27 +134,27 @@ void GrenadeSystem::explodeGrenade(Grenade& g)
   }
 }
 
-void GrenadeSystem::onPlayerFireWeapon(Event e)
+void GrenadeSystem::onPlayerFireWeapon(const Event& e)
 {
-  auto d = boost::any_cast<EvdPlayerFireWeapon>(e.data);
+  const auto* p = boost::any_cast<EvdPlayerFireWeapon>(e.data).player;
 
-  Grenade& p = spawnGrenade(Grenade::Type::CLUSTER);
-  p.owner = d.player.id;
+  Grenade& g = spawnGrenade(Grenade::Type::INERTIA);
+  g.owner = p->id;
 
   float strength = 600.f;
-  p.position = d.player.getCenterPosition();
-  p.velocity = 0.33f * d.player.velocity;
-  p.velocity.x += strength * glm::cos(d.player.aimDirection);
-  p.velocity.y += strength * -glm::sin(d.player.aimDirection);
+  g.position = p->getCenterPosition();
+  g.velocity = 0.33f * p->velocity;
+  g.velocity.x += strength * glm::cos(p->aimDirection);
+  g.velocity.y += strength * -glm::sin(p->aimDirection);
 }
 
-void GrenadeSystem::onPlayerSecondaryFireWeapon(Event e)
+void GrenadeSystem::onPlayerSecondaryFireWeapon(const Event& e)
 {
-  auto d = boost::any_cast<EvdPlayerSecondaryFireWeapon>(e.data);
+  const auto* p = boost::any_cast<EvdPlayerSecondaryFireWeapon>(e.data).player;
 
   for (auto& g : grenades) {
     // Grenade secondary fire explodes grenades
-    if (g.owner == d.player.id &&
+    if (g.owner == p->id &&
 	g.properties.manualDetonate) {
       explodeGrenade(g);
       continue;

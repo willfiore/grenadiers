@@ -5,7 +5,8 @@
 
 #include <glm/vec2.hpp>
 
-#include "Player.hpp"
+class Player;
+class Grenade;
 
 struct Event
 {
@@ -27,13 +28,8 @@ struct Event
   boost::any data;
 };
 
-struct EvdExplosion {
-  glm::vec2 position;
-  float radius {0.f};
-  float damage {0.f};
-  float knockback {0.f};
-  float terrainDamageModifier {1.f};
-  float terrainWobbleModifier {1.f};
+struct EvdGrenadeExplosion {
+  const Grenade* grenade;
 };
 
 struct EvdPowerupPickup {
@@ -42,13 +38,13 @@ struct EvdPowerupPickup {
 };
 
 struct EvdPlayerDeath {
-  Player player;
+  const Player* player;
 };
 
 struct EvdPlayerFireWeapon {
-  Player player;
+  const Player* player;
 };
 
 struct EvdPlayerSecondaryFireWeapon {
-  Player player;
+  const Player* player;
 };
