@@ -8,7 +8,7 @@
 #include "../Player.hpp"
 #include "../PlayerSystem.hpp"
 
-PlayerRenderer::PlayerRenderer(const PlayerSystem* p) :
+PlayerRenderer::PlayerRenderer(const PlayerSystem& p) :
   playerSystem(p)
 {
   shader = ResourceManager::GetShader("base");
@@ -18,7 +18,7 @@ void PlayerRenderer::draw()
 {
   shader.use();
   
-  for (const auto p : playerSystem->getPlayers()) {
+  for (const auto p : playerSystem.getPlayers()) {
     glm::mat4 model = glm::mat4();
     // Move to player position
     model = glm::translate(model, glm::vec3(p.position, 0.f));

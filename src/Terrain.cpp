@@ -92,6 +92,18 @@ std::vector<LineSegment> Terrain::getSegmentsInRange(float x1, float x2) const
   return ret;
 }
 
+std::pair<bool, glm::vec2> Terrain::intersect(glm::vec2 p1, glm::vec2 p2) const
+{
+  std::vector<LineSegment> tSegments = getSegmentsInRange(p1.x, p2.x);
+  for (auto& s : tSegments) {
+    auto intersection = geo::intersect(s.first, s.second, p1, p2);
+    if (intersection.first)
+      return intersection;
+  }
+
+  return std::make_pair(false, glm::vec2());
+}
+
 void Terrain::update(double t, double dt) {
   points = basePoints;
 
@@ -152,7 +164,7 @@ void Terrain::onExplosion(Event e)
       float dt = t - e.timestamp;
 
       // Oscillate up and down over time
-      float r = 10.f * g->properties.terrainWobbleModifier *
+      float r = 15.f * g->properties.terrainWobbleModifier *
       glm::cos(15.f*dt + glm::half_pi<float>());
 
       // Fade out over time

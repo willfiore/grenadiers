@@ -26,6 +26,7 @@ struct Grenade
 
   bool dirty_justBounced;
   bool dirty_awaitingRemoval;
+  int dirty_justCollidedWithPlayer;
 
   // Properties
   struct {
@@ -39,6 +40,8 @@ struct Grenade
 
     bool manualDetonate;
     bool detonateOnLand;
+    bool detonateOnPlayerHit;
+    bool bounceOnPlayerHit;
     bool slowBeforeDetonate;
     int numClusterFragments;
 

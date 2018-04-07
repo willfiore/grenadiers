@@ -29,6 +29,7 @@ public:
   float getAngle(float x) const;
 
   std::vector<LineSegment> getSegmentsInRange(float x1, float  x2) const;
+  std::pair<bool, glm::vec2> intersect(glm::vec2, glm::vec2) const;
 
   const std::vector<glm::vec2>& getPoints() const { return points; }
 

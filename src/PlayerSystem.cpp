@@ -158,30 +158,18 @@ void PlayerSystem::update(double t, double gdt)
 
     if (p.airborne) {
       if (!p.dirty_justLeftGround) {
-	std::vector<LineSegment> tSegments =
-	  terrain.getSegmentsInRange(p.position.x, newPosition.x);
-
-	bool foundIntersection = false;
-	for (auto& s : tSegments) {
-
-	  auto intersection =
-	    geo::intersect(s.first, s.second, p.position, newPosition);
-
-	  if (intersection.first) {
-	    foundIntersection = true;
-
-	    newPosition = intersection.second;
-	    p.acceleration.y = 0.f;
-	    p.velocity.y = 0.f;
-	    p.airborne = false;
-	    p.outOfControl = false;
-	    p.jumpAvailable = true;
-	    break;
-	  }
+	auto intersection = terrain.intersect(p.position, newPosition);
+	if (intersection.first) {
+	  p.acceleration.y = 0.f;
+	  p.velocity.y = 0.f;
+	  p.airborne = false;
+	  p.outOfControl = false;
+	  p.jumpAvailable = true;
+	  break;
 	}
 
 	// Failsafe
-	if (!foundIntersection && newPosition.y <
+	if (!intersection.first && newPosition.y <
 	    terrain.getHeight(newPosition.x))
 	  newPosition.y = terrain.getHeight(newPosition.x);
       } else {

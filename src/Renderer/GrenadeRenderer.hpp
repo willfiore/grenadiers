@@ -6,10 +6,10 @@ class GrenadeSystem;
 
 class GrenadeRenderer : public BaseRenderer {
 public:
-  GrenadeRenderer(const GrenadeSystem*);
+  GrenadeRenderer(const GrenadeSystem&);
   virtual void draw() override;
 
 private:
-  const GrenadeSystem* grenadeSystem;
+  const GrenadeSystem& grenadeSystem;
   Shader shader;
 };

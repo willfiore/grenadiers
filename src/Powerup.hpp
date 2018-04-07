@@ -15,4 +15,6 @@ struct Powerup
   float angle;
 
   bool landed;
+  
+  bool dirty_awaitingRemoval{false};
 };

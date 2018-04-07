@@ -34,7 +34,6 @@
 #include "Renderer/GrenadeRenderer.hpp"
 #include "Renderer/TerrainRenderer.hpp"
 #include "Renderer/PowerupRenderer.hpp"
-#include "Renderer/BeamRenderer.hpp"
 #include "Renderer/TimescaleZoneRenderer.hpp"
 
 int main() {
@@ -102,15 +101,14 @@ int main() {
 
   Terrain terrain;
   PlayerSystem playerSystem(terrain, controllers, timescaleSystem);
-  GrenadeSystem grenadeSystem(terrain, timescaleSystem);
-  PowerupSystem powerupSystem(&terrain, &playerSystem);
+  GrenadeSystem grenadeSystem(terrain, timescaleSystem, playerSystem);
+  PowerupSystem powerupSystem(terrain, playerSystem);
   CameraSystem cameraSystem(&w, playerSystem.getPlayers());
 
-  PlayerRenderer playerRenderer(&playerSystem);
-  TerrainRenderer terrainRenderer(&terrain);
-  GrenadeRenderer grenadeRenderer(&grenadeSystem);
-  PowerupRenderer powerupRenderer(&powerupSystem);
-  BeamRenderer beamRenderer(&playerSystem);
+  PlayerRenderer playerRenderer(playerSystem);
+  TerrainRenderer terrainRenderer(terrain);
+  GrenadeRenderer grenadeRenderer(grenadeSystem);
+  PowerupRenderer powerupRenderer(powerupSystem);
   TimescaleZoneRenderer timescaleZoneRenderer(timescaleSystem);
 
   // Create main VAO, VBO, for base geometry
@@ -212,7 +210,6 @@ int main() {
     playerRenderer.draw();
     grenadeRenderer.draw();
     powerupRenderer.draw();
-    beamRenderer.draw();
     timescaleZoneRenderer.draw();
 
     // --------------------------------

@@ -7,7 +7,7 @@
 #include "../ResourceManager.hpp"
 #include "../GrenadeSystem.hpp"
 
-GrenadeRenderer::GrenadeRenderer(const GrenadeSystem* p) :
+GrenadeRenderer::GrenadeRenderer(const GrenadeSystem& p) :
   grenadeSystem(p)
 {
   shader = ResourceManager::GetShader("base");
@@ -17,7 +17,7 @@ void GrenadeRenderer::draw()
 {
   shader.use();
 
-  for (auto& p : grenadeSystem->getGrenades()) {
+  for (auto& p : grenadeSystem.getGrenades()) {
     glm::mat4 model = glm::mat4();
     model = glm::translate(model, glm::vec3(p.position, 0.f));
     model = glm::scale(model, glm::vec3(3.f, 3.f, 1.f));

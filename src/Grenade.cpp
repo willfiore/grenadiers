@@ -19,6 +19,7 @@ Grenade::Grenade(Type t) :
   
   dirty_awaitingRemoval = false;
   dirty_justBounced = false;
+  dirty_justCollidedWithPlayer = -1;
   
   // Default properties
   properties.lifetime = 2.f;
@@ -29,6 +30,8 @@ Grenade::Grenade(Type t) :
   properties.damage = 0.f;
   properties.numClusterFragments = 0;
   properties.manualDetonate = true;
+  properties.detonateOnPlayerHit = false;
+  properties.bounceOnPlayerHit = true;
   properties.detonateOnLand = false;
   properties.slowBeforeDetonate = false;
 
@@ -50,6 +53,7 @@ Grenade::Grenade(Type t) :
       properties.detonateOnLand = true;
       properties.terrainDamageModifier = 0.2f;
       properties.terrainWobbleModifier = 0.5f;
+      properties.detonateOnPlayerHit = true;
       dirty_justBounced = true;
       break;
     case Type::INERTIA:

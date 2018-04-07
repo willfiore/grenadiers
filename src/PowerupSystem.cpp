@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-PowerupSystem::PowerupSystem(const Terrain* t, const PlayerSystem* p) :
+PowerupSystem::PowerupSystem(const Terrain& t, const PlayerSystem& p) :
   terrain(t),
   playerSystem(p)
 {
@@ -21,26 +21,35 @@ PowerupSystem::PowerupSystem(const Terrain* t, const PlayerSystem* p) :
 
 void PowerupSystem::update(double dt)
 {
-  for (auto it = powerups.begin(); it != powerups.end();) {
-    auto& p = *it;
-
+  // Remove powerups awaiting removal
+  powerups.erase(std::remove_if(powerups.begin(), powerups.end(),
+	[](const Powerup& p) -> bool {
+	return p.dirty_awaitingRemoval;
+	}), powerups.end());
+  
+  for (auto& p : powerups) {
     if (!p.landed) {
       float speed = 1500.f;
-      p.position.x -= speed * dt * glm::sin(p.angle);
-      p.position.y -= speed * dt * glm::cos(p.angle);
+      glm::vec2 newPosition;
+      newPosition.x = p.position.x - speed * dt * glm::sin(p.angle);
+      newPosition.y = p.position.y - speed * dt * glm::cos(p.angle);
 
-      if (p.position.y < terrain->getHeight(p.position.x)) {
+      auto intersection = terrain.intersect(p.position, newPosition);
+      if(intersection.first) {
 	p.landed = true;
+	p.position = intersection.second;
+      } else {
+	p.position = newPosition;
       }
     }
 
     if (p.landed) {
-      if (p.position.y != terrain->getHeight(p.position.x))
-	p.position.y = terrain->getHeight(p.position.x);
+      if (p.position.y != terrain.getHeight(p.position.x))
+	p.position.y = terrain.getHeight(p.position.x);
 
       // Check if any player is in pickup range
       int playerID = -1;
-      for (const auto& a : playerSystem->getPlayers()) {
+      for (const auto& a : playerSystem.getPlayers()) {
 	float dx = glm::distance(a.position, p.position);
 	if (dx < 16.f) {
 	  playerID = a.id;
@@ -54,13 +63,10 @@ void PowerupSystem::update(double dt)
 	d.powerupType = p.type;
 	d.playerID = playerID;
 	EventManager::Send(Event::POWERUP_PICKUP, d);
-
-	powerups.erase(it);
+	p.dirty_awaitingRemoval = true;
 	continue;
       }
     }
-
-    ++it;
   }
 }
 
@@ -70,7 +76,7 @@ void PowerupSystem::spawnPowerup()
   p.landed = false;
 
   p.targetPosition.x = 1950.f;
-  p.targetPosition.y = terrain->getHeight(p.targetPosition.x);
+  p.targetPosition.y = terrain.getHeight(p.targetPosition.x);
 
   p.angle =
     Random::randomFloat(-glm::quarter_pi<float>(), glm::quarter_pi<float>());

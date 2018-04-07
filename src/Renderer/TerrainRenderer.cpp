@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-TerrainRenderer::TerrainRenderer(const Terrain *t) :
+TerrainRenderer::TerrainRenderer(const Terrain& t) :
   terrain(t),
   depth(1000.f)
 {
@@ -29,7 +29,7 @@ TerrainRenderer::TerrainRenderer(const Terrain *t) :
   glEnableVertexAttribArray(0);
 
   // Index data
-  const auto& points = terrain->getPoints();
+  const auto& points = terrain.getPoints();
   for (size_t i = 0; i < points.size()-1; ++i) {
     indices.push_back(2*i);
     indices.push_back(2*i+1);
@@ -51,7 +51,7 @@ void TerrainRenderer::draw()
   shader.use();
   shader.setFloat("time", glfwGetTime());
 
-  const auto& points = terrain->getPoints();
+  const auto& points = terrain.getPoints();
 
   verts.clear();
   normals.clear();

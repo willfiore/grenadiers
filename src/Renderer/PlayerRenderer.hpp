@@ -10,9 +10,9 @@ struct Player;
 class PlayerRenderer : public BaseRenderer
 {
 public:
-  PlayerRenderer(const PlayerSystem*);
+  PlayerRenderer(const PlayerSystem&);
   virtual void draw() override;
 private:
-  const PlayerSystem* playerSystem;
+  const PlayerSystem& playerSystem;
   Shader shader;
 };

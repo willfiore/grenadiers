@@ -8,10 +8,10 @@ class Terrain;
 class TerrainRenderer : public BaseRenderer
 {
 public:
-  TerrainRenderer(const Terrain*);
+  TerrainRenderer(const Terrain&);
   virtual void draw() override;
 private:
-  const Terrain* terrain;
+  const Terrain& terrain;
   float depth;
 
   GLuint VAO;

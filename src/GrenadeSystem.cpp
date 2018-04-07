@@ -10,12 +10,16 @@
 #include "EventManager.hpp"
 #include "Terrain.hpp"
 #include "TimescaleSystem.hpp"
-#include "Player.hpp"
+#include "PlayerSystem.hpp"
 #include "Random.hpp"
 
-GrenadeSystem::GrenadeSystem(const Terrain& t, const TimescaleSystem& ts) :
+GrenadeSystem::GrenadeSystem(
+    const Terrain& t,
+    const TimescaleSystem& ts,
+    const PlayerSystem& p) :
   terrain(t),
-  timescaleSystem(ts)
+  timescaleSystem(ts),
+  playerSystem(p)
 {
   EventManager::Register(Event::PLAYER_FIRE_WEAPON,
       std::bind(&GrenadeSystem::onPlayerFireWeapon, this, _1));
@@ -61,6 +65,8 @@ void GrenadeSystem::update(double gdt)
 
     glm::vec2 newPosition = g.position + g.velocity * (float)dt;
 
+    // Bounce on terrain
+    // ------------------
     if (g.dirty_justBounced) {
       g.dirty_justBounced = false;
     }
@@ -77,18 +83,42 @@ void GrenadeSystem::update(double gdt)
 	if (intersection.first) {
 	  foundIntersection = true;
 	  g.dirty_justBounced = true;
+	  g.dirty_justCollidedWithPlayer = -1;
 
 	  newPosition = intersection.second;
 	  grenadeHitGround(g, newPosition);
 	  break;
 	}
       }
-
       // Failsafe
       if (!foundIntersection &&
 	  newPosition.y < terrain.getHeight(newPosition.x)) {
 	newPosition.y = terrain.getHeight(newPosition.x);
 	grenadeHitGround(g, newPosition);
+      }
+    }
+
+    // Collide with players
+    // --------------------
+    for (const auto& p : playerSystem.getPlayers()) {
+      // Don't collide inside another player
+      if (g.dirty_justCollidedWithPlayer == p.id) {
+	if (p.collidesWith(g.position, newPosition)) continue;
+	else g.dirty_justCollidedWithPlayer = -1;
+      }
+
+      if (p.collidesWith(g.position, newPosition)) {
+	if (g.properties.detonateOnPlayerHit) {
+	  explodeGrenade(g);
+	  break;
+	}
+	if (g.properties.bounceOnPlayerHit) {
+	  glm::vec2 bounceDirection = glm::normalize(g.position - p.position);
+	  g.velocity =
+	    0.6f * glm::length(g.velocity) * bounceDirection;
+	  g.dirty_justCollidedWithPlayer = p.id;
+	  break;
+	}
       }
     }
 
@@ -114,7 +144,7 @@ void GrenadeSystem::grenadeHitGround(Grenade& g, glm::vec2 pos)
   float grenadeAngle = glm::atan(g.velocity.y, g.velocity.x);
   float rotateAngle = 2 * (terrainAngle - grenadeAngle);
   g.velocity = 0.5f * glm::rotate(g.velocity, rotateAngle);
-  g.position = pos;
+  // g.position = pos;
 }
 
 void GrenadeSystem::explodeGrenade(Grenade& g)
@@ -138,8 +168,9 @@ void GrenadeSystem::onPlayerFireWeapon(const Event& e)
 {
   const auto* p = boost::any_cast<EvdPlayerFireWeapon>(e.data).player;
 
-  Grenade& g = spawnGrenade(Grenade::Type::INERTIA);
+  Grenade& g = spawnGrenade(Grenade::Type::CLUSTER);
   g.owner = p->id;
+  g.dirty_justCollidedWithPlayer = g.owner;
 
   float strength = 600.f;
   g.position = p->getCenterPosition();

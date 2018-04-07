@@ -2,3 +2,6 @@
 * rework event data to pass pointers to objects
 * add inertia grenade
 * generalise primitive drawing functions
+* grenades collide with players
+* powerups correctly land on ground
+* moved terrain collision checks to terrain class

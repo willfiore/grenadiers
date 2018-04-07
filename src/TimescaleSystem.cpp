@@ -11,6 +11,11 @@ TimescaleSystem::TimescaleSystem()
 {
   globalTimescale = 1.0;
 
+  Zone& z = addZone();
+  z.position = {2000.f, 200.f};
+  z.radius = 144.f;
+  z.timescale = 0.14f;
+
   EventManager::Register(Event::Type::EXPLOSION,
       std::bind(&TimescaleSystem::onExplosion, this, _1));
 }

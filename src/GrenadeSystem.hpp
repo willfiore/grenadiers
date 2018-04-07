@@ -7,10 +7,15 @@
 struct Event;
 class Terrain;
 class TimescaleSystem;
+class PlayerSystem;
 
 class GrenadeSystem {
 public:
-  GrenadeSystem(const Terrain&, const TimescaleSystem&);
+  GrenadeSystem(
+      const Terrain&,
+      const TimescaleSystem&,
+      const PlayerSystem&
+      );
 
   void update(double dt);
   const std::vector<Grenade>& getGrenades() const { return grenades; }
@@ -30,4 +35,5 @@ private:
 
   const Terrain& terrain;
   const TimescaleSystem& timescaleSystem;
+  const PlayerSystem& playerSystem;
 };

@@ -6,10 +6,10 @@ class PowerupSystem;
 
 class PowerupRenderer : public BaseRenderer {
 public:
-  PowerupRenderer(const PowerupSystem*);
+  PowerupRenderer(const PowerupSystem&);
   virtual void draw() override;
 
 private:
-  const PowerupSystem* powerupSystem;
+  const PowerupSystem& powerupSystem;
   Shader shader;
 };

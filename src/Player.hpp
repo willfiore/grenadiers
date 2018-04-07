@@ -25,6 +25,10 @@ struct Player {
   static constexpr double GRENADE_REFRESH_TIMER = 2.0;
 
   glm::vec2 getCenterPosition() const;
+  // Collide with point
+  bool collidesWith(glm::vec2) const;
+  // Collide with line
+  bool collidesWith(glm::vec2, glm::vec2) const;
 
   // State
   //////////////////////////////////////////////
