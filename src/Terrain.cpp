@@ -12,6 +12,8 @@
 #include "EventManager.hpp"
 #include "ResourceManager.hpp"
 #include "Grenade.hpp"
+#include "Powerup.hpp"
+#include "Console.hpp"
 
 Terrain::Terrain() :
   maxDepth(-400.f),
@@ -23,8 +25,10 @@ Terrain::Terrain() :
   maxWidth = basePoints.back().x;
   points = basePoints;
 
-  EventManager::Register(Event::EXPLOSION,
+  EventManager::Register(Event::Type::EXPLOSION,
       std::bind(&Terrain::onExplosion, this, _1));
+  EventManager::Register(Event::Type::POWERUP_LAND,
+      std::bind(&Terrain::onPowerupLand, this, _1));
 }
 
 float Terrain::getHeight(float x) const
@@ -105,6 +109,8 @@ std::pair<bool, glm::vec2> Terrain::intersect(glm::vec2 p1, glm::vec2 p2) const
 }
 
 void Terrain::update(double t, double dt) {
+  time = t;
+
   points = basePoints;
 
   // Remove old modifiers
@@ -138,42 +144,60 @@ void Terrain::addFunc(
   modifiers.push_back(m);
 }
 
-void Terrain::onExplosion(Event e)
+void Terrain::wobble(float xpos, float amplitude)
 {
-  const auto* g = boost::any_cast<EvdGrenadeExplosion>(e.data).grenade;
-
-  if (g->properties.radius == 0.f) return;
-
-  // Deform terrain
-  for (size_t i = 0; i < basePoints.size(); ++i) {
-    glm::vec2& p = basePoints[i];
-    
-    float distance = glm::distance(g->position, p);
-    if (distance < g->properties.radius) {
-      p.y -= 0.3f * g->properties.terrainDamageModifier * g->properties.radius *
-        glm::cos( (distance / g->properties.radius) * glm::half_pi<float>()) *
-        (1 - (p.y / maxDepth));
-
-       if (p.y < maxDepth) p.y = maxDepth;
-     }
-   }
-
   // Wobble terrain
+  double currentTime = time;
   addFunc([=](float x, double t) -> float {
 
-      float dt = t - e.timestamp;
+      float dt = t - currentTime;
 
       // Oscillate up and down over time
-      float r = 15.f * g->properties.terrainWobbleModifier *
-      glm::cos(15.f*dt + glm::half_pi<float>());
+      float r = amplitude * glm::cos(15.f*dt + glm::half_pi<float>());
 
       // Fade out over time
       float mt = glm::exp(-3.5f*dt);
 
       // Fade out over distance
-      float dx = glm::abs(x - g->position.x);
+      float dx = glm::abs(x - xpos);
       float mx = glm::exp(-dx / 200.f);
 
       return r * mx * mt;
       }, 4.0);
+}
+
+void Terrain::deform(glm::vec2 pos, float radius, float depthModifier)
+{
+  for (auto& p : basePoints) {
+    float distance = glm::distance(pos, p);
+    if (distance < radius) {
+      // Create hole in ground
+      p.y -= 0.3f * radius * depthModifier *
+	glm::cos(glm::half_pi<float>() * (distance/radius)) *
+	(1 - p.y / maxDepth);
+
+      if (p.y < maxDepth) p.y = maxDepth;
+    }
+  }
+}
+
+void Terrain::onExplosion(const Event& e)
+{
+  const auto* g = boost::any_cast<EvdGrenadeExplosion>(e.data).grenade;
+
+  if (g->properties.radius == 0.f) return;
+
+  deform(g->position, g->properties.radius, 1.f);
+
+  float wobbleAmount = 15.f * g->properties.terrainWobbleModifier;
+  if ((g->position.y - getHeight(g->position.x)) / g->properties.radius < 1.f) {
+    wobble(g->position.x, wobbleAmount);
+  }
+}
+
+void Terrain::onPowerupLand(const Event& e)
+{
+  const Powerup* p = boost::any_cast<EvdPowerupLand>(e.data).powerup;
+  deform(p->position, 90.f, 1.f);
+  wobble(p->position.x, 15.f);
 }

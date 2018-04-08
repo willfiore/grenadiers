@@ -7,6 +7,7 @@
 
 class Player;
 class Grenade;
+class Powerup;
 
 struct Event
 {
@@ -31,6 +32,10 @@ struct Event
 
 struct EvdGrenadeExplosion {
   const Grenade* grenade;
+};
+
+struct EvdPowerupLand {
+  const Powerup* powerup;
 };
 
 struct EvdPowerupPickup {

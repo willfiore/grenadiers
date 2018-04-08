@@ -5,3 +5,28 @@
 * grenades collide with players
 * powerups correctly land on ground
 * moved terrain collision checks to terrain class
+* fixed aerial explosions causing terrain wobble
+
+Ideas:
+------
+Player can hold up to 3 (or 4?) grenade types at once.
+Ability to combine grenade effects
+Multiple of the same grenade can be held and combined
+ -- eg cluster X cluster for huge cluster grenade
+
+more grenade types:
+-------------------
+homing grenade
+freeze grenade
+singularity grenade
+rocket jumper grenade
+mines
+create terrain / mountain grenade
+airstrike beacon
+teleportation beacon
+electricity grenade
+latch grenade (proximity beam that slows players down)
+seeker defense drone
+radial explosion grenade
+"force pull" weapon stealer grenade
+terrain wave grenade (wipEout style)

@@ -38,6 +38,10 @@ void PowerupSystem::update(double dt)
       if(intersection.first) {
 	p.landed = true;
 	p.position = intersection.second;
+
+	EvdPowerupLand d;
+	d.powerup = &p;
+	EventManager::Send(Event::Type::POWERUP_LAND, d);
       } else {
 	p.position = newPosition;
       }

@@ -37,7 +37,13 @@ public:
   void addFunc(const std::function<float(float x, double t)>&, double);
 
 private:
-  void onExplosion(Event e);
+  double time;
+
+  void wobble(float x, float amplitude);
+  void deform(glm::vec2 position, float radius, float depth);
+
+  void onExplosion(const Event& e);
+  void onPowerupLand(const Event& e);
 
   float maxDepth;
   float maxWidth;

@@ -168,7 +168,7 @@ void GrenadeSystem::onPlayerFireWeapon(const Event& e)
 {
   const auto* p = boost::any_cast<EvdPlayerFireWeapon>(e.data).player;
 
-  Grenade& g = spawnGrenade(Grenade::Type::CLUSTER);
+  Grenade& g = spawnGrenade(Grenade::Type::STANDARD);
   g.owner = p->id;
   g.dirty_justCollidedWithPlayer = g.owner;
 
