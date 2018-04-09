@@ -9,6 +9,7 @@ std::map<Grenade::Type, std::string> Grenade::typeStrings = {
   {Grenade::Type::STANDARD, "Standard"},
   {Grenade::Type::CLUSTER, "Cluster"},
   {Grenade::Type::INERTIA, "Inertia"},
+  {Grenade::Type::TELEPORT, "Teleport"},
 };
 
 const char* Grenade::getTypeString(Type t)
@@ -40,6 +41,7 @@ Grenade::Grenade(Type t) :
   
   dirty_awaitingRemoval = false;
   dirty_justBounced = false;
+  dirty_justManualDetonated = false;
   dirty_justCollidedWithPlayer = -1;
 
   setProperties(type);
@@ -55,12 +57,14 @@ void Grenade::setProperties(Grenade::Type type)
   properties.terrainWobbleModifier = 1.f;
   properties.damage = 0.f;
   properties.numClusterFragments = 0;
+  properties.detonateOnDeath = true;
   properties.manualDetonate = true;
   properties.detonateOnPlayerHit = false;
   properties.bounceOnPlayerHit = true;
   properties.detonateOnLand = false;
   properties.slowBeforeDetonate = false;
   properties.spawnInertiaZone = false;
+  properties.teleportPlayerOnDetonate = false;
 
   switch(type) {
     case Type::STANDARD:
@@ -90,6 +94,10 @@ void Grenade::setProperties(Grenade::Type type)
       properties.slowBeforeDetonate = true;
       properties.spawnInertiaZone = true;
       break;
+    case Type::TELEPORT:
+      properties.teleportPlayerOnDetonate = true;
+      properties.lifetime = 2.f;
+      properties.detonateOnDeath = false;
 
     ///////////////
     // Combi

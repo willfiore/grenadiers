@@ -27,7 +27,9 @@ Player::Player()
   health = STARTING_HEALTH;
   primaryGrenadeSlot = 0;
 
+  primingGrenade = false;
   combinationEnabled = false;
+
   alive = true;
   airborne = false;
   jumpAvailable = true;

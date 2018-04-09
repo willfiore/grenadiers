@@ -38,8 +38,9 @@ PlayerSystem::PlayerSystem(
     player.giveGrenade(Grenade::Type::STANDARD, 5);
     player.giveGrenade(Grenade::Type::CLUSTER, 8);
     player.giveGrenade(Grenade::Type::INERTIA, 10);
+    player.giveGrenade(Grenade::Type::TELEPORT, 10);
   }
-  
+
   // Create dummy player
   players.emplace_back(Player());
   Player& player = players.back();
@@ -50,7 +51,7 @@ PlayerSystem::PlayerSystem(
 
   EventManager::Register(Event::EXPLOSION,
       std::bind(&PlayerSystem::onExplosion, this, _1));
-  
+
   EventManager::Register(Event::POWERUP_PICKUP,
       std::bind(&PlayerSystem::onPowerupPickup, this, _1));
 }
@@ -72,7 +73,7 @@ void PlayerSystem::update(double t, double gdt)
 
     // Aiming
     ////////////////////////////////////////////////////
-    
+
     // Deadzone
     if (pow(axes[0], 2) + pow(axes[1], 2)
 	< pow(Player::MOVEMENT_DEADZONE, 2)) {
@@ -239,9 +240,9 @@ void PlayerSystem::update(double t, double gdt)
 	    p.inventory[p.primaryGrenadeSlot].ammo);
 	ImGui::Text("---- Secondary (%i) ----", p.combinationEnabled);
 	if (p.combinationEnabled) {
-	  ImGui::Text("%s (%i)",
-	      Grenade::getTypeString(p.inventory[p.secondaryGrenadeSlot].type),
-	      p.inventory[p.secondaryGrenadeSlot].ammo);
+	ImGui::Text("%s (%i)",
+	    Grenade::getTypeString(p.inventory[p.secondaryGrenadeSlot].type),
+	    p.inventory[p.secondaryGrenadeSlot].ammo);
 	} else {
 	  ImGui::Text("");
 	}
@@ -266,18 +267,18 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
       case JOY_BUTTON_A:
 	jump(player);
 	break;
+
+      case JOY_BUTTON_RB:
+	player.primingGrenade = true;
+	break;
+
+      case JOY_BUTTON_Y:
+	cycleGrenade(player);
+	break;
+
       case JOY_BUTTON_LB:
 	detonateGrenade(player);
-	break;
-      case JOY_BUTTON_RB:
-	throwGrenade(player);
-	break;
-      case JOY_BUTTON_Y:
-	cyclePrimaryGrenade(player);
-	break;
-      case JOY_BUTTON_B:
-	cycleSecondaryGrenade(player);
-	break;
+
       default: break;
     }
   }
@@ -285,6 +286,10 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
   // Release
   else {
     switch (button) {
+      case JOY_BUTTON_RB:
+	player.primingGrenade = false;
+	throwGrenade(player);
+	break;
       default: break;
     }
   }
@@ -312,6 +317,7 @@ void PlayerSystem::throwGrenade(Player& p)
   EventManager::Send(Event::PLAYER_THROW_GRENADE, d);
 
   p.combinationEnabled = false;
+  p.secondaryGrenadeSlot = 0;
 }
 
 void PlayerSystem::detonateGrenade(Player& p)
@@ -321,37 +327,37 @@ void PlayerSystem::detonateGrenade(Player& p)
   EventManager::Send(Event::PLAYER_DETONATE_GRENADE, d);
 }
 
-void PlayerSystem::cyclePrimaryGrenade(Player& p)
+void PlayerSystem::cycleGrenade(Player& p)
 {
   if (p.inventory.size() <= 1) return;
 
-  // Increment grenade slot
-  p.primaryGrenadeSlot = (p.primaryGrenadeSlot + 1) % p.inventory.size();
-
-  p.combinationEnabled = false;
-}
-
-void PlayerSystem::cycleSecondaryGrenade(Player& p)
-{
-  if (p.inventory.size() < 1) return;
-
-  if (!p.combinationEnabled) {
-    p.combinationEnabled = true;
-    if (p.secondaryGrenadeSlot == p.primaryGrenadeSlot) {
-      p.secondaryGrenadeSlot = (p.secondaryGrenadeSlot + 1) % p.inventory.size();
+  //// Primary grenade slot
+  if (!p.primingGrenade) {
+    p.primaryGrenadeSlot = (p.primaryGrenadeSlot+1) % p.inventory.size();
+  }
+  //// Secondary grenade slot
+  else {
+    // If combination is disabled, enable it, and reset the secondary slot
+    if (!p.combinationEnabled) {
+      p.combinationEnabled = true;
+      p.secondaryGrenadeSlot = p.primaryGrenadeSlot ? 0 : 1;
     }
-    return;
-  }
+    // If it's already enabled, increment the slot
+    else {
+      auto oldSlot = p.secondaryGrenadeSlot;
+      p.secondaryGrenadeSlot =
+	(p.secondaryGrenadeSlot+1) % p.inventory.size();
 
-  auto oldSlot = p.secondaryGrenadeSlot;
+      // But don't allow the slot to match the primary slot
+      // (can't combine the same grenade with itself)
+      if (p.secondaryGrenadeSlot == p.primaryGrenadeSlot) {
+	p.secondaryGrenadeSlot =
+	  (p.secondaryGrenadeSlot+1) % p.inventory.size();
+      }
 
-  p.secondaryGrenadeSlot = (p.secondaryGrenadeSlot + 1) % p.inventory.size();
-  if (p.secondaryGrenadeSlot == p.primaryGrenadeSlot) {
-    p.secondaryGrenadeSlot = (p.secondaryGrenadeSlot + 1) % p.inventory.size();
-  }
-
-  if (p.secondaryGrenadeSlot < oldSlot && p.combinationEnabled) {
-    p.combinationEnabled = false;
+      if (p.secondaryGrenadeSlot < oldSlot)
+	p.combinationEnabled = false;
+    }
   }
 }
 
@@ -360,10 +366,21 @@ void PlayerSystem::onExplosion(const Event& e)
   const auto* g = boost::any_cast<EvdGrenadeExplosion>(e.data).grenade;
 
   for (auto& p : players) {
+
+    // Teleport
+    if (g->owner == p.id &&
+	g->properties.teleportPlayerOnDetonate) {
+      p.position = g->position;
+      p.airborne = true;
+      p.jumpAvailable = false;
+
+      if (p.velocity.y < 0) p.velocity.y = 0;
+    }
+
     glm::vec2 diff = p.position - g->position;
     float dist = glm::length(diff);
 
-    if (dist > g->properties.radius) continue;
+    if (dist >= g->properties.radius) continue;
 
     // Damage falloff
     float damage = g->properties.damage * 

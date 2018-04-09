@@ -152,10 +152,14 @@ void GrenadeSystem::explodeGrenade(Grenade& g)
 {
   g.dirty_awaitingRemoval = true;
 
+  if (!g.dirty_justManualDetonated &&
+      !g.properties.detonateOnDeath) return;
+
   EvdGrenadeExplosion d;
   d.grenade = &g;
   EventManager::Send(Event::EXPLOSION, d);
 
+  // Spawn cluster fragments
   for (int i = 0; i < g.properties.numClusterFragments; ++i) {
     Grenade& f = spawnGrenade(Grenade::Type::CLUSTER_FRAGMENT);
     f.owner = g.owner;
@@ -172,19 +176,11 @@ void GrenadeSystem::onPlayerThrowGrenade(const Event& e)
 
   if (p->inventory.size() == 0) return;
 
-  Grenade::Type primaryType = p->inventory[p->primaryGrenadeSlot].type;
-
-  Grenade::Type type;
-  if (!p->combinationEnabled) {
-    type = primaryType;
-  } else {
-    Grenade::Type secondaryType = p->inventory[p->secondaryGrenadeSlot].type;
-    type = Grenade::Type(Grenade::Type::_ +
-	geo::uniquePair(primaryType, secondaryType));
-  }
+  Grenade::Type type = p->inventory[p->primaryGrenadeSlot].type;
 
   Grenade& g = spawnGrenade(type);
   g.owner = p->id;
+  g.spawnTimestamp = e.timestamp;
   g.dirty_justCollidedWithPlayer = g.owner;
 
   float strength = 600.f;
@@ -198,13 +194,21 @@ void GrenadeSystem::onPlayerDetonateGrenade(const Event& e)
 {
   const auto* p = boost::any_cast<EvdPlayerDetonateGrenade>(e.data).player;
 
+  Grenade* oldestGrenade = nullptr;
   for (auto& g : grenades) {
     // Grenade secondary fire explodes grenades
     if (g.owner == p->id &&
-	g.properties.manualDetonate) {
-      explodeGrenade(g);
+	g.properties.manualDetonate &&
+	(oldestGrenade == nullptr ||
+	 g.spawnTimestamp < oldestGrenade->spawnTimestamp)) {
+      oldestGrenade = &g;
       continue;
     }
+  }
+
+  if (oldestGrenade != nullptr) {
+    oldestGrenade->dirty_justManualDetonated = true;
+    explodeGrenade(*oldestGrenade);
   }
 }
 

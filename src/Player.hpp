@@ -66,6 +66,7 @@ struct Player {
   std::vector<GrenadeSlot>::size_type primaryGrenadeSlot;
   std::vector<GrenadeSlot>::size_type secondaryGrenadeSlot;
 
+  bool primingGrenade;
   bool combinationEnabled;
 
   bool alive;

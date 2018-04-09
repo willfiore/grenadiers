@@ -14,6 +14,7 @@ struct Grenade
     CLUSTER,
     CLUSTER_FRAGMENT,
     INERTIA,
+    TELEPORT,
     _,
 
     COMBI_CLUSTER_INERTIA = _ + geo::uniquePair(CLUSTER, INERTIA),
@@ -28,6 +29,7 @@ struct Grenade
 
   Type type;
   int owner;
+  double spawnTimestamp;
   double age;
   double localTimescale;
 
@@ -36,6 +38,7 @@ struct Grenade
   glm::vec2 acceleration;
 
   bool dirty_justBounced;
+  bool dirty_justManualDetonated;
   bool dirty_awaitingRemoval;
   int dirty_justCollidedWithPlayer;
 
@@ -49,6 +52,7 @@ struct Grenade
     float terrainDamageModifier;
     float terrainWobbleModifier;
 
+    bool detonateOnDeath;
     bool manualDetonate;
     bool detonateOnLand;
     bool detonateOnPlayerHit;
@@ -56,6 +60,7 @@ struct Grenade
     bool slowBeforeDetonate;
     int numClusterFragments;
     bool spawnInertiaZone;
+    bool teleportPlayerOnDetonate;
 
   } properties;
 

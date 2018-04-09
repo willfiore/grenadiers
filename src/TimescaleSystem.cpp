@@ -50,6 +50,6 @@ void TimescaleSystem::onExplosion(const Event& e)
     Zone& z = addZone();
     z.position = g->position;
     z.radius = g->properties.radius;
-    z.timescale = 0.2f;
+    z.timescale = 0.25f;
   }
 }

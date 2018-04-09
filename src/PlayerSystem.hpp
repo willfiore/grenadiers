@@ -28,8 +28,7 @@ public:
   void throwGrenade(Player&);
   void detonateGrenade(Player&);
 
-  void cyclePrimaryGrenade(Player&);
-  void cycleSecondaryGrenade(Player&);
+  void cycleGrenade(Player&);
 
   const std::vector<Player>& getPlayers() const { return players; };
 
