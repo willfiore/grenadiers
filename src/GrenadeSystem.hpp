@@ -22,8 +22,8 @@ public:
 
 private:
 
-  void onPlayerFireWeapon(const Event&);
-  void onPlayerSecondaryFireWeapon(const Event&);
+  void onPlayerThrowGrenade(const Event&);
+  void onPlayerDetonateGrenade(const Event&);
 
   void grenadeHitGround(Grenade&, glm::vec2);
   void explodeGrenade(Grenade&);

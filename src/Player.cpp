@@ -25,13 +25,22 @@ Player::Player()
 
   // Initial state
   health = STARTING_HEALTH;
+  primaryGrenadeSlot = 0;
 
+  combinationEnabled = false;
   alive = true;
   airborne = false;
   jumpAvailable = true;
   outOfControl = false;
   firingBeam = false;
   lastMovingRight = true;
+}
+
+glm::vec2 Player::getCenterPosition() const
+{
+  glm::vec3 relativeCenter = {0.f, Player::SIZE, 0.f};
+  relativeCenter = glm::rotate(relativeCenter, angle, {0.f, 0.f, 1.f});
+  return position + glm::vec2(relativeCenter);
 }
 
 bool Player::collidesWith(glm::vec2 p) const
@@ -84,9 +93,21 @@ bool Player::collidesWith(glm::vec2 p1, glm::vec2 p2) const
   return false;
 }
 
-glm::vec2 Player::getCenterPosition() const
+void Player::giveGrenade(Grenade::Type type, int ammo)
 {
-  glm::vec3 relativeCenter = {0.f, Player::SIZE, 0.f};
-  relativeCenter = glm::rotate(relativeCenter, angle, {0.f, 0.f, 1.f});
-  return position + glm::vec2(relativeCenter);
+  auto pre = std::find_if(inventory.begin(), inventory.end(),
+      [=](const GrenadeSlot& g) -> bool {
+      return g.type == type;
+      });
+
+  // Grenade doesn't already exist in inventory
+  if (pre == inventory.end()) {
+    if (inventory.size() < INVENTORY_SIZE) {
+      inventory.emplace_back(type, ammo);
+    }
+  }
+  else {
+    pre->ammo += ammo;
+  }
 }
+

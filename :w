@@ -3,7 +3,6 @@
 #include "geo.hpp"
 #include "Console.hpp"
 
-// STATICS
 std::map<Grenade::Type, std::string> Grenade::typeStrings = {
   {Grenade::Type::BASE, "Base"},
   {Grenade::Type::STANDARD, "Standard"},
@@ -11,17 +10,6 @@ std::map<Grenade::Type, std::string> Grenade::typeStrings = {
   {Grenade::Type::INERTIA, "Inertia"},
 };
 
-const char* Grenade::getTypeString(Type t)
-{
-  const auto& i = typeStrings.find(t);
-  if (i == typeStrings.end()) {
-    return std::to_string(t).c_str();
-  }
-  return i->second.c_str();
-}
-
-/////////////////////////
-/////////////////////////
 
 Grenade::Grenade() :
   Grenade(Type::STANDARD)

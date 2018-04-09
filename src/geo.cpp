@@ -51,3 +51,4 @@ float geo::cross(glm::vec2 a, glm::vec2 b)
   glm::vec3 b3 = glm::vec3(b, 0.f);
   return glm::cross(a3, b3).z;
 }
+

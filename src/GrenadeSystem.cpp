@@ -21,11 +21,11 @@ GrenadeSystem::GrenadeSystem(
   timescaleSystem(ts),
   playerSystem(p)
 {
-  EventManager::Register(Event::PLAYER_FIRE_WEAPON,
-      std::bind(&GrenadeSystem::onPlayerFireWeapon, this, _1));
+  EventManager::Register(Event::PLAYER_THROW_GRENADE,
+      std::bind(&GrenadeSystem::onPlayerThrowGrenade, this, _1));
 
-  EventManager::Register(Event::PLAYER_SECONDARY_FIRE_WEAPON,
-      std::bind(&GrenadeSystem::onPlayerSecondaryFireWeapon, this, _1));
+  EventManager::Register(Event::PLAYER_DETONATE_GRENADE,
+      std::bind(&GrenadeSystem::onPlayerDetonateGrenade, this, _1));
 }
 
 void GrenadeSystem::update(double gdt)
@@ -115,7 +115,8 @@ void GrenadeSystem::update(double gdt)
 	if (g.properties.bounceOnPlayerHit) {
 	  glm::vec2 bounceDirection = glm::normalize(g.position - p.position);
 	  g.velocity =
-	    0.6f * glm::length(g.velocity) * bounceDirection;
+	    0.6f * glm::length(g.velocity) * bounceDirection +
+	    0.2f * p.velocity;
 	  g.dirty_justCollidedWithPlayer = p.id;
 	  break;
 	}
@@ -164,11 +165,25 @@ void GrenadeSystem::explodeGrenade(Grenade& g)
   }
 }
 
-void GrenadeSystem::onPlayerFireWeapon(const Event& e)
+void GrenadeSystem::onPlayerThrowGrenade(const Event& e)
 {
-  const auto* p = boost::any_cast<EvdPlayerFireWeapon>(e.data).player;
+  auto d = boost::any_cast<EvdPlayerThrowGrenade>(e.data);
+  const Player* p = d.player;
 
-  Grenade& g = spawnGrenade(Grenade::Type::STANDARD);
+  if (p->inventory.size() == 0) return;
+
+  Grenade::Type primaryType = p->inventory[p->primaryGrenadeSlot].type;
+
+  Grenade::Type type;
+  if (!p->combinationEnabled) {
+    type = primaryType;
+  } else {
+    Grenade::Type secondaryType = p->inventory[p->secondaryGrenadeSlot].type;
+    type = Grenade::Type(Grenade::Type::_ +
+	geo::uniquePair(primaryType, secondaryType));
+  }
+
+  Grenade& g = spawnGrenade(type);
   g.owner = p->id;
   g.dirty_justCollidedWithPlayer = g.owner;
 
@@ -179,9 +194,9 @@ void GrenadeSystem::onPlayerFireWeapon(const Event& e)
   g.velocity.y += strength * -glm::sin(p->aimDirection);
 }
 
-void GrenadeSystem::onPlayerSecondaryFireWeapon(const Event& e)
+void GrenadeSystem::onPlayerDetonateGrenade(const Event& e)
 {
-  const auto* p = boost::any_cast<EvdPlayerSecondaryFireWeapon>(e.data).player;
+  const auto* p = boost::any_cast<EvdPlayerDetonateGrenade>(e.data).player;
 
   for (auto& g : grenades) {
     // Grenade secondary fire explodes grenades

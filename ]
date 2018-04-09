@@ -1,30 +1,22 @@
 #pragma once
 
 #include <glm/vec2.hpp>
-#include <map>
-#include <string>
 #include "geo.hpp"
 
 struct Grenade
 {
   enum Type {
-    // Don't forget to add typename string in .cpp file!!
-    BASE,
     STANDARD,
     CLUSTER,
     CLUSTER_FRAGMENT,
     INERTIA,
-    _,
+    TYPE_COUNT,
 
-    COMBI_CLUSTER_INERTIA = _ + geo::uniquePair(CLUSTER, INERTIA),
+    CLUSTER_INERTIA = geo::intPair
   };
-
-  static std::map<Type, std::string> typeStrings;
-  static const char* getTypeString(Type);
 
   Grenade();
   Grenade(Type);
-  void setProperties(Grenade::Type);
 
   Type type;
   int owner;
@@ -55,9 +47,7 @@ struct Grenade
     bool bounceOnPlayerHit;
     bool slowBeforeDetonate;
     int numClusterFragments;
-    bool spawnInertiaZone;
 
   } properties;
 
 };
-

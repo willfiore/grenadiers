@@ -3,6 +3,16 @@
 #include <vector>
 #include <glm/vec2.hpp>
 #include <glm/glm.hpp>
+#include "Grenade.hpp"
+
+struct GrenadeSlot {
+  GrenadeSlot(Grenade::Type t, int a) :
+    type(t), ammo(a)
+  {}
+
+  Grenade::Type type;
+  int ammo;
+};
 
 struct Player {
   Player();
@@ -23,12 +33,18 @@ struct Player {
   static constexpr float AIM_SPEED = 22.f;
   static constexpr float AIM_SPEED_BEAM = 0.f;
   static constexpr double GRENADE_REFRESH_TIMER = 2.0;
+  static constexpr int INVENTORY_SIZE = 4;
+
+  // Methods
+  //////////////////////////////////////////////
 
   glm::vec2 getCenterPosition() const;
   // Collide with point
   bool collidesWith(glm::vec2) const;
   // Collide with line
   bool collidesWith(glm::vec2, glm::vec2) const;
+
+  void giveGrenade(Grenade::Type, int ammo = 1);
 
   // State
   //////////////////////////////////////////////
@@ -46,8 +62,12 @@ struct Player {
 
   // State
   float health;
+  std::vector<GrenadeSlot> inventory;
+  std::vector<GrenadeSlot>::size_type primaryGrenadeSlot;
+  std::vector<GrenadeSlot>::size_type secondaryGrenadeSlot;
 
-  // Flags
+  bool combinationEnabled;
+
   bool alive;
   bool airborne;
   bool jumpAvailable;

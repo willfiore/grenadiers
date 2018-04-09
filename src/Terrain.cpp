@@ -172,7 +172,7 @@ void Terrain::deform(glm::vec2 pos, float radius, float depthModifier)
     float distance = glm::distance(pos, p);
     if (distance < radius) {
       // Create hole in ground
-      p.y -= 0.3f * radius * depthModifier *
+      p.y -= 0.1f * radius * depthModifier *
 	glm::cos(glm::half_pi<float>() * (distance/radius)) *
 	(1 - p.y / maxDepth);
 

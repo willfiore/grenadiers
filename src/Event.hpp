@@ -15,9 +15,8 @@ struct Event
     KEY_PRESS,
     GAME_START,
     PLAYER_DEATH,
-    PLAYER_FIRE_WEAPON,
-    PLAYER_RELEASE_WEAPON,
-    PLAYER_SECONDARY_FIRE_WEAPON,
+    PLAYER_THROW_GRENADE,
+    PLAYER_DETONATE_GRENADE,
     POWERUP_LAND,
     POWERUP_PICKUP,
     EXPLOSION
@@ -30,27 +29,33 @@ struct Event
   boost::any data;
 };
 
+// EXPLOSION
 struct EvdGrenadeExplosion {
   const Grenade* grenade;
 };
 
+// POWERUP_LAND
 struct EvdPowerupLand {
   const Powerup* powerup;
 };
 
+// POWERUP_PICKUP
 struct EvdPowerupPickup {
   int powerupType;
   int playerID;
 };
 
+// PLAYER_DEATH
 struct EvdPlayerDeath {
   const Player* player;
 };
 
-struct EvdPlayerFireWeapon {
+// PLAYER_THROW_GRENADE
+struct EvdPlayerThrowGrenade {
   const Player* player;
 };
 
-struct EvdPlayerSecondaryFireWeapon {
+// PLAYER_DETONATE_GRENADE
+struct EvdPlayerDetonateGrenade {
   const Player* player;
 };

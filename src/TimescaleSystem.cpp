@@ -11,11 +11,6 @@ TimescaleSystem::TimescaleSystem()
 {
   globalTimescale = 1.0;
 
-  Zone& z = addZone();
-  z.position = {2000.f, 200.f};
-  z.radius = 144.f;
-  z.timescale = 0.14f;
-
   EventManager::Register(Event::Type::EXPLOSION,
       std::bind(&TimescaleSystem::onExplosion, this, _1));
 }
@@ -51,10 +46,10 @@ void TimescaleSystem::onExplosion(const Event& e)
 {
   const Grenade* g = boost::any_cast<EvdGrenadeExplosion>(e.data).grenade;
 
-  if (g->type == Grenade::Type::INERTIA) {
+  if (g->properties.spawnInertiaZone) {
     Zone& z = addZone();
     z.position = g->position;
     z.radius = g->properties.radius;
-    z.timescale = 0.17f;
+    z.timescale = 0.2f;
   }
 }

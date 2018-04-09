@@ -28,21 +28,25 @@ PlayerSystem::PlayerSystem(
   timescaleSystem(ts)
 {
   for (const auto& c : controllers) {
-    Player player;
-    player.position.x = 2000.f + Random::randomFloat(0.f, 200.f);
+    players.emplace_back(Player());
+    Player& player = players.back();
 
-    player.id = players.size();
+    player.id = players.size()-1;
+    player.position.x = 2000.f;
     player.controllerID = c.first;
 
-    players.push_back(player);
+    player.giveGrenade(Grenade::Type::STANDARD, 5);
+    player.giveGrenade(Grenade::Type::CLUSTER, 8);
+    player.giveGrenade(Grenade::Type::INERTIA, 10);
   }
   
   // Create dummy player
-  Player player;
+  players.emplace_back(Player());
+  Player& player = players.back();
+
+  player.id = players.size()-1;
   player.position.x = 2200.f;
-  player.id = players.size();
   player.controllerID = -1;
-  players.push_back(player);
 
   EventManager::Register(Event::EXPLOSION,
       std::bind(&PlayerSystem::onExplosion, this, _1));
@@ -224,14 +228,24 @@ void PlayerSystem::update(double t, double gdt)
     std::stringstream header_label;
     header_label << "Player " << p.id; 
 
-    int flags = 0;
-    if (p.id == 0) flags = ImGuiTreeNodeFlags_DefaultOpen;
+    int flags = ImGuiTreeNodeFlags_DefaultOpen;
 
     if(ImGui::CollapsingHeader(header_label.str().c_str(), flags)) {
       ImGui::Text("Health: %2.f", p.health);
-      ImGui::Text("Airborne: %i", p.airborne);
-      ImGui::Text("Jump available: %i", p.jumpAvailable);
-      ImGui::Text("Out of control: %i", p.outOfControl);
+      if (p.inventory.size()) {
+	ImGui::Text("---- Primary ----");
+	ImGui::Text("%s (%i)",
+	    Grenade::getTypeString(p.inventory[p.primaryGrenadeSlot].type),
+	    p.inventory[p.primaryGrenadeSlot].ammo);
+	ImGui::Text("---- Secondary (%i) ----", p.combinationEnabled);
+	if (p.combinationEnabled) {
+	  ImGui::Text("%s (%i)",
+	      Grenade::getTypeString(p.inventory[p.secondaryGrenadeSlot].type),
+	      p.inventory[p.secondaryGrenadeSlot].ammo);
+	} else {
+	  ImGui::Text("");
+	}
+      }
     }
   }
   ImGui::End();
@@ -250,11 +264,20 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
   if (action) {
     switch (button) {
       case JOY_BUTTON_A:
-	jump(player); break;
-      case JOY_BUTTON_RB:
-	fireWeapon(player); break;
+	jump(player);
+	break;
       case JOY_BUTTON_LB:
-	secondaryFireWeapon(player); break;
+	detonateGrenade(player);
+	break;
+      case JOY_BUTTON_RB:
+	throwGrenade(player);
+	break;
+      case JOY_BUTTON_Y:
+	cyclePrimaryGrenade(player);
+	break;
+      case JOY_BUTTON_B:
+	cycleSecondaryGrenade(player);
+	break;
       default: break;
     }
   }
@@ -282,18 +305,54 @@ void PlayerSystem::jump(Player& p)
   p.jumpAvailable = false;
 }
 
-void PlayerSystem::fireWeapon(Player& p)
+void PlayerSystem::throwGrenade(Player& p)
 {
-  EvdPlayerFireWeapon d;
+  EvdPlayerThrowGrenade d;
   d.player = &p;
-  EventManager::Send(Event::PLAYER_FIRE_WEAPON, d);
+  EventManager::Send(Event::PLAYER_THROW_GRENADE, d);
+
+  p.combinationEnabled = false;
 }
 
-void PlayerSystem::secondaryFireWeapon(Player& p)
+void PlayerSystem::detonateGrenade(Player& p)
 {
-  EvdPlayerSecondaryFireWeapon d;
+  EvdPlayerDetonateGrenade d;
   d.player = &p;
-  EventManager::Send(Event::PLAYER_SECONDARY_FIRE_WEAPON, d);
+  EventManager::Send(Event::PLAYER_DETONATE_GRENADE, d);
+}
+
+void PlayerSystem::cyclePrimaryGrenade(Player& p)
+{
+  if (p.inventory.size() <= 1) return;
+
+  // Increment grenade slot
+  p.primaryGrenadeSlot = (p.primaryGrenadeSlot + 1) % p.inventory.size();
+
+  p.combinationEnabled = false;
+}
+
+void PlayerSystem::cycleSecondaryGrenade(Player& p)
+{
+  if (p.inventory.size() < 1) return;
+
+  if (!p.combinationEnabled) {
+    p.combinationEnabled = true;
+    if (p.secondaryGrenadeSlot == p.primaryGrenadeSlot) {
+      p.secondaryGrenadeSlot = (p.secondaryGrenadeSlot + 1) % p.inventory.size();
+    }
+    return;
+  }
+
+  auto oldSlot = p.secondaryGrenadeSlot;
+
+  p.secondaryGrenadeSlot = (p.secondaryGrenadeSlot + 1) % p.inventory.size();
+  if (p.secondaryGrenadeSlot == p.primaryGrenadeSlot) {
+    p.secondaryGrenadeSlot = (p.secondaryGrenadeSlot + 1) % p.inventory.size();
+  }
+
+  if (p.secondaryGrenadeSlot < oldSlot && p.combinationEnabled) {
+    p.combinationEnabled = false;
+  }
 }
 
 void PlayerSystem::onExplosion(const Event& e)

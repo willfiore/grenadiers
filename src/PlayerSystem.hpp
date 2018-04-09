@@ -24,8 +24,12 @@ public:
   void processInput(int controllerID, int button, bool action);
 
   void jump(Player&);
-  void fireWeapon(Player&);
-  void secondaryFireWeapon(Player&);
+
+  void throwGrenade(Player&);
+  void detonateGrenade(Player&);
+
+  void cyclePrimaryGrenade(Player&);
+  void cycleSecondaryGrenade(Player&);
 
   const std::vector<Player>& getPlayers() const { return players; };
 

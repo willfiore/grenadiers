@@ -1,0 +1,27 @@
+Notes:
+------
+| No default nade. Frag grenade is just another type
+| Hold up to 3 or 4 nade types at the same time.
+| Each has limited ammunition.
+| If you run out - tough. Survive until you can pick another nade up
+| Players can combine two nades in their inventory for a more powerful hybrid
+| (must think of downside to this.. maybe it instantly uses up both nades)
+| 
+| Also: Perks
+| -----------
+| Double jump
+| Aerial dash
+| High jump
+| Power throw
+| Shield (?? maybe make a grenade type instead)
+| 
+| Player controller could have slide dash:
+| to maintain direction whilst throwing in another
+| and it looks cool
+
+---------------------------------------------------
+
+* add player inventory
+* nade switch button
+* combination controls 
+   -- (needs work)
