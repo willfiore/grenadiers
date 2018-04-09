@@ -5,7 +5,6 @@
 
 // STATICS
 std::map<Grenade::Type, std::string> Grenade::typeStrings = {
-  {Grenade::Type::BASE, "Base"},
   {Grenade::Type::STANDARD, "Standard"},
   {Grenade::Type::CLUSTER, "Cluster"},
   {Grenade::Type::INERTIA, "Inertia"},

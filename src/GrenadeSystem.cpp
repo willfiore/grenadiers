@@ -48,7 +48,7 @@ void GrenadeSystem::update(double gdt)
       (timescaleSystem.getTimescaleAtPosition(g.position) - g.localTimescale);
     double dt = g.localTimescale * gdt;
 
-    g.age += dt;
+    g.age += gdt;
 
     // ------------
     // Physics

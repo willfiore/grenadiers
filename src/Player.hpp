@@ -23,7 +23,7 @@ struct Player {
   static constexpr float ACCEL_X_NOCONTROL = 1800.f;
   static constexpr float ACCEL_X_AIRBORNE = 2000.f;
   static constexpr float ACCEL_X_AIRBORNE_NOCONTROL = 100.f;
-  static constexpr float ACCEL_Y = -4000.f;
+  static constexpr float ACCEL_Y = -3500.f;
   static constexpr float MAX_DOWNHILL_ANGLE = glm::radians(45.f);
   static constexpr float MAX_UPHILL_ANGLE = glm::radians(60.f);
   static constexpr float MIN_SIDEJUMP_ANGLE = glm::radians(20.f);

@@ -374,7 +374,7 @@ void PlayerSystem::onExplosion(const Event& e)
       p.airborne = true;
       p.jumpAvailable = false;
 
-      if (p.velocity.y < 0) p.velocity.y = 0;
+      if (p.velocity.y < 0.f) p.velocity.y = 0.f;
     }
 
     glm::vec2 diff = p.position - g->position;
