@@ -174,8 +174,6 @@ void GrenadeSystem::onPlayerThrowGrenade(const Event& e)
   auto d = boost::any_cast<EvdPlayerThrowGrenade>(e.data);
   const Player* p = d.player;
 
-  if (p->inventory.size() == 0) return;
-
   Grenade::Type type = p->inventory[p->primaryGrenadeSlot].type;
 
   Grenade& g = spawnGrenade(type);

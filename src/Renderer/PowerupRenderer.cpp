@@ -10,6 +10,7 @@ PowerupRenderer::PowerupRenderer(const PowerupSystem& p) :
   powerupSystem(p)
 {
   shader = ResourceManager::GetShader("base");
+  powerupModel = ResourceManager::GetModel("quad");
 }
 
 void PowerupRenderer::draw()
@@ -23,7 +24,6 @@ void PowerupRenderer::draw()
     model = glm::translate(model, glm::vec3({0.f, 1.f, 0.f}));
 
     shader.setMat4("model", model);
-
-    drawPrimitive(Primitive::QUAD);
+    powerupModel->draw();
   }
 }

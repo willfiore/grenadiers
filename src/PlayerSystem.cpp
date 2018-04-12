@@ -35,10 +35,9 @@ PlayerSystem::PlayerSystem(
     player.position.x = 2000.f;
     player.controllerID = c.first;
 
-    player.giveGrenade(Grenade::Type::STANDARD, 5);
-    player.giveGrenade(Grenade::Type::CLUSTER, 8);
-    player.giveGrenade(Grenade::Type::INERTIA, 10);
-    player.giveGrenade(Grenade::Type::TELEPORT, 10);
+    player.giveGrenade(Grenade::Type::CLUSTER, 5);
+    player.giveGrenade(Grenade::Type::INERTIA, 1);
+    player.giveGrenade(Grenade::Type::TELEPORT, 1);
   }
 
   // Create dummy player
@@ -312,12 +311,24 @@ void PlayerSystem::jump(Player& p)
 
 void PlayerSystem::throwGrenade(Player& p)
 {
+  if (p.inventory.size() == 0) return;
+
   EvdPlayerThrowGrenade d;
   d.player = &p;
   EventManager::Send(Event::PLAYER_THROW_GRENADE, d);
 
   p.combinationEnabled = false;
   p.secondaryGrenadeSlot = 0;
+
+  // Reduce ammo
+  p.inventory[p.primaryGrenadeSlot].ammo--;
+
+  if (p.inventory.at(p.primaryGrenadeSlot).ammo <= 0) {
+    p.inventory.erase(p.inventory.begin() + p.primaryGrenadeSlot);
+
+    if (p.primaryGrenadeSlot > 0)
+      p.primaryGrenadeSlot--;
+  }
 }
 
 void PlayerSystem::detonateGrenade(Player& p)
@@ -329,7 +340,7 @@ void PlayerSystem::detonateGrenade(Player& p)
 
 void PlayerSystem::cycleGrenade(Player& p)
 {
-  if (p.inventory.size() <= 1) return;
+  if (p.inventory.size() <= 0) return;
 
   //// Primary grenade slot
   if (!p.primingGrenade) {
@@ -337,6 +348,7 @@ void PlayerSystem::cycleGrenade(Player& p)
   }
   //// Secondary grenade slot
   else {
+    if (p.inventory.size() <= 1) return;
     // If combination is disabled, enable it, and reset the secondary slot
     if (!p.combinationEnabled) {
       p.combinationEnabled = true;
@@ -355,7 +367,7 @@ void PlayerSystem::cycleGrenade(Player& p)
 	  (p.secondaryGrenadeSlot+1) % p.inventory.size();
       }
 
-      if (p.secondaryGrenadeSlot < oldSlot)
+      if (p.secondaryGrenadeSlot <= oldSlot)
 	p.combinationEnabled = false;
     }
   }

@@ -63,8 +63,8 @@ struct Player {
   // State
   float health;
   std::vector<GrenadeSlot> inventory;
-  std::vector<GrenadeSlot>::size_type primaryGrenadeSlot;
-  std::vector<GrenadeSlot>::size_type secondaryGrenadeSlot;
+  int primaryGrenadeSlot;
+  int secondaryGrenadeSlot;
 
   bool primingGrenade;
   bool combinationEnabled;

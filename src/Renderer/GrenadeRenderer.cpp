@@ -11,6 +11,7 @@ GrenadeRenderer::GrenadeRenderer(const GrenadeSystem& p) :
   grenadeSystem(p)
 {
   shader = ResourceManager::GetShader("base");
+  grenadeModel = ResourceManager::GetModel("quad");
 }
 
 void GrenadeRenderer::draw()
@@ -24,6 +25,6 @@ void GrenadeRenderer::draw()
 
     shader.setMat4("model", model);
 
-    drawPrimitive(Primitive::QUAD);
+    grenadeModel->draw();
   }
 }

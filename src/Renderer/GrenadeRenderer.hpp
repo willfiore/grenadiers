@@ -12,4 +12,5 @@ public:
 private:
   const GrenadeSystem& grenadeSystem;
   Shader shader;
+  const Model* grenadeModel;
 };

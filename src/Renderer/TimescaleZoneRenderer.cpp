@@ -9,6 +9,7 @@ TimescaleZoneRenderer::TimescaleZoneRenderer(const TimescaleSystem& t) :
   timescaleSystem(t)
 {
   shader = ResourceManager::GetShader("inertia_zone");
+  zoneModel = ResourceManager::GetModel("circle");
 }
 
 void TimescaleZoneRenderer::draw()
@@ -21,6 +22,7 @@ void TimescaleZoneRenderer::draw()
     model = glm::scale(model, {z.radius, z.radius, 1.f});
 
     shader.setMat4("model", model);
-    drawPrimitive(Primitive::CIRCLE);
+
+    zoneModel->draw();
   }
 }

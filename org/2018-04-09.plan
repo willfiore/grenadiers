@@ -2,3 +2,8 @@
 * detonation changed to single grenade only, in order of age
 * added teleport grenade
 * added grenade fizzle property on death
+
+Reworking the renderer:
+-----------------------
+Any drawn geometry is a model.
+Primitive model files for quad, circle, 

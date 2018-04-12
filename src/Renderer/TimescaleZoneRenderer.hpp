@@ -12,4 +12,5 @@ public:
 private:
   const TimescaleSystem& timescaleSystem;
   Shader shader;
+  const Model* zoneModel;
 };

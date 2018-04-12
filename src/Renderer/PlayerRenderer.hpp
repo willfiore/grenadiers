@@ -15,4 +15,5 @@ public:
 private:
   const PlayerSystem& playerSystem;
   Shader shader;
+  const Model* playerModel;
 };

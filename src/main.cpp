@@ -84,6 +84,29 @@ int main() {
   ResourceManager::LoadShader("inertia_zone", "base.vert", "inertia_zone.frag");
   w.initShaders();
 
+  // std::vector<glm::vec3> cm_v;
+  // std::vector<unsigned int> cm_i;
+  // // Circle
+  // unsigned int circleNumPoints = 128;
+  // float divisionSize = glm::two_pi<float>() / circleNumPoints;
+  // cm_v.push_back({0.f, 0.f, 0.f});
+  // for (unsigned int i = 0; i < circleNumPoints; ++i) {
+  //   float angle = i*divisionSize;
+  //   // v is i+1
+  //   cm_v.push_back({glm::cos(angle), glm::sin(angle), 0.f});
+  //   // next v is i+2
+  //   unsigned int v1 = i+1;
+  //   unsigned int v2 = i+2;
+  //   if (v2 > circleNumPoints) v2 = 1;
+  //   cm_i.insert(cm_i.end(), {0, v1, v2});
+  // }
+
+  // Model cm(cm_v, cm_i);
+  // ResourceManager::SaveModel(cm, "circle.model");
+
+  ResourceManager::LoadModel("quad", "quad.model");
+  ResourceManager::LoadModel("circle", "circle.model");
+
   // Controller setup
   std::map<int, ControllerData> controllers;
 
@@ -111,8 +134,6 @@ int main() {
   PowerupRenderer powerupRenderer(powerupSystem);
   TimescaleZoneRenderer timescaleZoneRenderer(timescaleSystem);
 
-  // Create main VAO, VBO, for base geometry
-  BaseRenderer::InitSharedVertexData();
 
   // Main loop
   const double dt = 1.f/60.f; // logic tickrate

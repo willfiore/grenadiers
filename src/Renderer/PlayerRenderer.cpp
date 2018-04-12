@@ -12,6 +12,7 @@ PlayerRenderer::PlayerRenderer(const PlayerSystem& p) :
   playerSystem(p)
 {
   shader = ResourceManager::GetShader("base");
+  playerModel = ResourceManager::GetModel("quad");
 }
 
 void PlayerRenderer::draw()
@@ -30,7 +31,8 @@ void PlayerRenderer::draw()
     model = glm::translate(model, glm::vec3({0.f, 1.f, 0.f}));
     shader.setMat4("model", model);
 
-    drawPrimitive(Primitive::QUAD);
+    // draw
+    playerModel->draw();
 
     // Draw aim direction
     model = glm::mat4();
@@ -38,6 +40,6 @@ void PlayerRenderer::draw()
     model = glm::rotate(model, -p.aimDirection, {0.f, 0.f, 1.f});
     model = glm::scale(model, {2*Player::SIZE, 1.f, 1.f});
     shader.setMat4("model", model);
-    drawPrimitive(Primitive::LINE);
+
   }
 }
