@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.10)
-project (platformer)
+project (grenadiers)
 
 # Compilation database
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -22,7 +22,7 @@ include_directories(/usr/include/c++/7.3.1/)
 file(GLOB_RECURSE SOURCES "src/*.c*")
 
 # Executable
-add_executable(platformer ${SOURCES})
+add_executable(grenadiers ${SOURCES})
 
 # Link libraries
-target_link_libraries(platformer glfw dl)
+target_link_libraries(grenadiers glfw dl)
