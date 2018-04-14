@@ -7,8 +7,9 @@
 #include "Terrain.hpp"
 #include "PlayerSystem.hpp"
 #include "EventManager.hpp"
+#include "Grenade.hpp"
 
-#include <iostream>
+#include "Console.hpp"
 
 PowerupSystem::PowerupSystem(const Terrain& t, const PlayerSystem& p) :
   terrain(t),
@@ -52,20 +53,17 @@ void PowerupSystem::update(double dt)
 	p.position.y = terrain.getHeight(p.position.x);
 
       // Check if any player is in pickup range
-      int playerID = -1;
-      for (const auto& a : playerSystem.getPlayers()) {
-	float dx = glm::distance(a.position, p.position);
-	if (dx < 16.f) {
-	  playerID = a.id;
-	  break;
-	}
-      }
+      const auto& players = playerSystem.getPlayers();
+      auto i = std::find_if(players.begin(), players.end(),
+	  [&](const Player& player) {
+	  float dx = glm::distance(player.position, p.position);
+	  return dx < 16.f;
+	  });
 
-      // Player picked up powerup
-      if (playerID != -1) {
+      if (i != players.end()) {
 	EvdPowerupPickup d;
-	d.powerupType = p.type;
-	d.playerID = playerID;
+	d.player = &*i;
+	d.powerup = &p;
 	EventManager::Send(Event::POWERUP_PICKUP, d);
 	p.dirty_awaitingRemoval = true;
 	continue;
@@ -79,7 +77,7 @@ void PowerupSystem::spawnPowerup()
   Powerup p;
   p.landed = false;
 
-  p.targetPosition.x = 1950.f;
+  p.targetPosition.x = Random::randomFloat(1000.f, 2000.f);
   p.targetPosition.y = terrain.getHeight(p.targetPosition.x);
 
   p.angle =
@@ -88,8 +86,8 @@ void PowerupSystem::spawnPowerup()
   p.position = p.targetPosition;
   p.position.x += 2000.f * glm::sin(p.angle);
   p.position.y += 2000.f * glm::cos(p.angle);
-
-  p.type = Powerup::Type::TEST;
+  
+  p.type = Random::randomInt(0, Grenade::Type::_1 - 1);
 
   powerups.push_back(p);
 }

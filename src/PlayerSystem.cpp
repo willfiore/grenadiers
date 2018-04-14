@@ -194,7 +194,7 @@ void PlayerSystem::update(double t, double gdt)
     float goalAngle = terrainAngle;
 
     float terrainHeight = terrain.getHeight(p.position.x);
-    float heightModifier = (p.position.y - terrainHeight) / 220.f;
+    float heightModifier = (p.position.y - terrainHeight) / 180.f;
     if (heightModifier < 0.f) heightModifier = 0.f;
     if (heightModifier > 1.f) heightModifier = 1.f;
 
@@ -430,5 +430,8 @@ void PlayerSystem::onPowerupPickup(const Event& e)
 {
   auto d = boost::any_cast<EvdPowerupPickup>(e.data);
 
-  Player& p = players[d.playerID];
+  Player* player = const_cast<Player*>(d.player);
+  const Powerup* powerup = d.powerup;
+
+  player->giveGrenade(Grenade::Type(powerup->type), 5);
 }

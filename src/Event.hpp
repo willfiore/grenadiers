@@ -41,8 +41,8 @@ struct EvdPowerupLand {
 
 // POWERUP_PICKUP
 struct EvdPowerupPickup {
-  int powerupType;
-  int playerID;
+  const Powerup* powerup;
+  const Player* player;
 };
 
 // PLAYER_DEATH

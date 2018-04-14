@@ -7,17 +7,21 @@
 
 struct Grenade
 {
+  // Don't forget to add typename string in .cpp file!!
   enum Type {
-    // Don't forget to add typename string in .cpp file!!
-    BASE,
+    // Player ownable
     STANDARD,
     CLUSTER,
-    CLUSTER_FRAGMENT,
     INERTIA,
     TELEPORT,
-    _,
+    _1,
+    
+    // Not player ownable
+    CLUSTER_FRAGMENT,
+    _2,
 
-    COMBI_CLUSTER_INERTIA = _ + geo::uniquePair(CLUSTER, INERTIA),
+    // Combination grenades
+    COMBI_CLUSTER_INERTIA = _2 + geo::uniquePair(CLUSTER, INERTIA),
   };
 
   static std::map<Type, std::string> typeStrings;
