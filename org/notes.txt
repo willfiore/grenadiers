@@ -1,0 +1,24 @@
+Grenade types:
+==============
+
+Offensive:
+----------
+* Explosive
+* Cluster
+
+Utility:
+--------
+* Inertia
+* Teleport
+
+============
+============
+Combi nades:
+============
+============
+
+Explosive + Cluster:
+--------------------
+Large explosion at initial grenade. Explodes into fragments that
+fire out radially, faster than a normal cluster grenade.
+
