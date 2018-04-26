@@ -101,7 +101,9 @@ void GrenadeSystem::update(double gdt)
     // Collide with players
     // --------------------
     for (const auto& p : playerSystem.getPlayers()) {
-      // Don't collide inside another player
+      if (p.ghost) continue;
+
+      // Avoid getting stuck inside players
       if (g.dirty_justCollidedWithPlayer == p.id) {
 	if (p.collidesWith(g.position, newPosition)) continue;
 	else g.dirty_justCollidedWithPlayer = -1;
@@ -112,6 +114,7 @@ void GrenadeSystem::update(double gdt)
 	  explodeGrenade(g);
 	  break;
 	}
+
 	if (g.properties.bounceOnPlayerHit) {
 	  glm::vec2 bounceDirection = glm::normalize(g.position - p.position);
 	  g.velocity =
@@ -129,7 +132,8 @@ void GrenadeSystem::update(double gdt)
     // Timer explode
     // -------------
     if (g.age >= g.properties.lifetime) {
-      explodeGrenade(g);
+      g.properties.detonateOnDeath ?
+	explodeGrenade(g) : fizzleGrenade(g);
     }
   }
 }
@@ -152,9 +156,6 @@ void GrenadeSystem::explodeGrenade(Grenade& g)
 {
   g.dirty_awaitingRemoval = true;
 
-  if (!g.dirty_justManualDetonated &&
-      !g.properties.detonateOnDeath) return;
-
   EvdGrenadeExplosion d;
   d.grenade = &g;
   EventManager::Send(Event::EXPLOSION, d);
@@ -167,6 +168,12 @@ void GrenadeSystem::explodeGrenade(Grenade& g)
     f.velocity.x = 0.3f*g.velocity.x + 230.f*Random::randomFloat(-1.f, 1.f);
     f.velocity.y = 400.f*Random::randomFloat(0.5f, 1.f);
   }
+}
+
+void GrenadeSystem::fizzleGrenade(Grenade& g)
+{
+  g.dirty_awaitingRemoval = true;
+  return;
 }
 
 void GrenadeSystem::onPlayerThrowGrenade(const Event& e)
@@ -205,7 +212,6 @@ void GrenadeSystem::onPlayerDetonateGrenade(const Event& e)
   }
 
   if (oldestGrenade != nullptr) {
-    oldestGrenade->dirty_justManualDetonated = true;
     explodeGrenade(*oldestGrenade);
   }
 }

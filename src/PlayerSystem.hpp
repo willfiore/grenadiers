@@ -24,11 +24,11 @@ public:
   void processInput(int controllerID, int button, bool action);
 
   void jump(Player&);
-
   void throwGrenade(Player&);
   void detonateGrenade(Player&);
-
   void cycleGrenade(Player&);
+  void kill(Player&);
+  void respawn(Player&);
 
   const std::vector<Player>& getPlayers() const { return players; };
 

@@ -42,7 +42,6 @@ struct Grenade
   glm::vec2 acceleration;
 
   bool dirty_justBounced;
-  bool dirty_justManualDetonated;
   bool dirty_awaitingRemoval;
   int dirty_justCollidedWithPlayer;
 
@@ -65,6 +64,7 @@ struct Grenade
     int numClusterFragments;
     bool spawnInertiaZone;
     bool teleportPlayerOnDetonate;
+    int maxAllowedOut;
 
   } properties;
 

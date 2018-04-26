@@ -40,7 +40,6 @@ Grenade::Grenade(Type t) :
   
   dirty_awaitingRemoval = false;
   dirty_justBounced = false;
-  dirty_justManualDetonated = false;
   dirty_justCollidedWithPlayer = -1;
 
   setProperties(type);
@@ -64,6 +63,7 @@ void Grenade::setProperties(Grenade::Type type)
   properties.slowBeforeDetonate = false;
   properties.spawnInertiaZone = false;
   properties.teleportPlayerOnDetonate = false;
+  properties.maxAllowedOut = geo::inf<float>();
 
   switch(type) {
     case Type::STANDARD:
@@ -95,8 +95,9 @@ void Grenade::setProperties(Grenade::Type type)
       break;
     case Type::TELEPORT:
       properties.teleportPlayerOnDetonate = true;
-      properties.lifetime = 2.f;
+      properties.lifetime = geo::inf<float>();
       properties.detonateOnDeath = false;
+      properties.maxAllowedOut = 1;
 
     ///////////////
     // Combi

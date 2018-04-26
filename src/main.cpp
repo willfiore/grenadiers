@@ -72,7 +72,6 @@ int main() {
 
   // -----------------------------------
 
-
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     std::cout << "Error: Incomplete frame buffer" << std::endl;
 

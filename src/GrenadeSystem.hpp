@@ -27,6 +27,7 @@ private:
 
   void grenadeHitGround(Grenade&, glm::vec2);
   void explodeGrenade(Grenade&);
+  void fizzleGrenade(Grenade&);
 
   Grenade& spawnGrenade(Grenade::Type t = Grenade::Type::STANDARD);
 

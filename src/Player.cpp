@@ -25,12 +25,15 @@ Player::Player()
 
   // Initial state
   health = STARTING_HEALTH;
+  lives = STARTING_LIVES;
   primaryGrenadeSlot = 0;
 
   primingGrenade = false;
   combinationEnabled = false;
 
   alive = true;
+  respawning = false;
+  ghost = false;
   airborne = false;
   jumpAvailable = true;
   outOfControl = false;

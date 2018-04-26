@@ -29,7 +29,8 @@ struct Player {
   static constexpr float MIN_SIDEJUMP_ANGLE = glm::radians(20.f);
   static constexpr float JUMP_VELOCITY = 1000.f;
   static constexpr float SIZE = 10.f;
-  static constexpr float STARTING_HEALTH = 300.f;
+  static constexpr float STARTING_HEALTH = 100.f;
+  static constexpr int STARTING_LIVES = 5;
   static constexpr float AIM_SPEED = 22.f;
   static constexpr float AIM_SPEED_BEAM = 0.f;
   static constexpr double GRENADE_REFRESH_TIMER = 2.0;
@@ -62,6 +63,7 @@ struct Player {
 
   // State
   float health;
+  int lives;
   std::vector<GrenadeSlot> inventory;
   int primaryGrenadeSlot;
   int secondaryGrenadeSlot;
@@ -70,6 +72,8 @@ struct Player {
   bool combinationEnabled;
 
   bool alive;
+  bool respawning;
+  bool ghost;
   bool airborne;
   bool jumpAvailable;
   bool outOfControl;

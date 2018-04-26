@@ -3,7 +3,8 @@
 
 gamestates: pre-game, game, round end, game end
 pre-game countdown (in console, first)
-player lives and respawn at location (move spawn beam across screen, fire to spawn)
 player invulnerability on respawn
 time slowdown on (final?) player death
 teleport beacon only fizzle when a second is thrown
+
++ player lives and respawn at location (move spawn beam across screen, fire to spawn)

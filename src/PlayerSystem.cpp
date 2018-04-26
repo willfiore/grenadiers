@@ -35,9 +35,9 @@ PlayerSystem::PlayerSystem(
     player.position.x = 2000.f;
     player.controllerID = c.first;
 
-    player.giveGrenade(Grenade::Type::CLUSTER, 5);
-    player.giveGrenade(Grenade::Type::INERTIA, 1);
-    player.giveGrenade(Grenade::Type::TELEPORT, 1);
+    player.giveGrenade(Grenade::Type::CLUSTER, 15);
+    player.giveGrenade(Grenade::Type::INERTIA, 2);
+    player.giveGrenade(Grenade::Type::TELEPORT, 3);
   }
 
   // Create dummy player
@@ -113,15 +113,18 @@ void PlayerSystem::update(double t, double gdt)
 
     // -------- Acceleration --------
     float accel_factor = Player::ACCEL_X;
-    if (p.airborne)
+
+    if (p.respawning) {
+    }
+    else if (p.airborne)
       accel_factor = Player::ACCEL_X_AIRBORNE;
-    if (p.airborne && (p.outOfControl || p.firingBeam))
+    else if (p.airborne && (p.outOfControl || p.firingBeam))
       accel_factor = Player::ACCEL_X_AIRBORNE_NOCONTROL;
-    if (!p.airborne && (p.outOfControl || p.firingBeam))
+    else if (!p.airborne && (p.outOfControl || p.firingBeam))
       accel_factor = Player::ACCEL_X_NOCONTROL;
 
     // Acceleration due to player input
-    if (!p.outOfControl && !p.firingBeam) {
+    if (p.respawning || (!p.outOfControl && !p.firingBeam)) {
       p.acceleration.x = axes[0] * accel_factor;
     } else {
       p.acceleration.x = 0.f;
@@ -131,12 +134,20 @@ void PlayerSystem::update(double t, double gdt)
     p.acceleration.x -= accel_factor / Player::MAX_SPEED * p.velocity.x;
 
     // Gravity
-    if (p.airborne) {
+    if (p.airborne && !p.respawning) {
       p.acceleration.y = Player::ACCEL_Y;
+    }
+    else {
+      p.acceleration.y = 0;
     }
 
     // -------- Velocity --------
     p.velocity += p.acceleration * (float)dt;
+
+    if (p.respawning) {
+      p.velocity.y = 0;
+    }
+
     glm::vec2 maxNewPosition = p.position + p.velocity * (float)dt;
 
     float terrainAngle = terrain.getAngle(maxNewPosition.x);
@@ -148,6 +159,7 @@ void PlayerSystem::update(double t, double gdt)
     // -------- Position --------
     glm::vec2 newPosition = p.position + p.velocity * (float)dt;
 
+    // Stick to ground if on ground
     if (!p.airborne) {
       if (abs(terrainAngle) > Player::MAX_DOWNHILL_ANGLE &&
 	  glm::sign(p.velocity.x) != glm::sign(terrainAngle)) {
@@ -164,7 +176,6 @@ void PlayerSystem::update(double t, double gdt)
       if (!p.dirty_justLeftGround) {
 	auto intersection = terrain.intersect(p.position, newPosition);
 	if (intersection.first) {
-	  p.acceleration.y = 0.f;
 	  p.velocity.y = 0.f;
 	  p.airborne = false;
 	  p.outOfControl = false;
@@ -181,6 +192,10 @@ void PlayerSystem::update(double t, double gdt)
       }
 
       p.position = newPosition;
+
+      if (p.respawning) {
+	p.position.y = 100.f;
+      }
     }
 
     // World boundary
@@ -209,17 +224,7 @@ void PlayerSystem::update(double t, double gdt)
 
     // Health
     if (p.health <= 0.f) {
-      p.health = 0.f;
-
-      if (p.alive) {
-	p.alive = false;
-
-	EvdPlayerDeath d;
-	d.player = &p;
-	EventManager::Send(Event::PLAYER_DEATH, d);
-
-	Console::log() << red << "Player death";
-      }
+      kill(p);
     }
   }
 
@@ -232,6 +237,7 @@ void PlayerSystem::update(double t, double gdt)
 
     if(ImGui::CollapsingHeader(header_label.str().c_str(), flags)) {
       ImGui::Text("Health: %2.f", p.health);
+      ImGui::Text("Lives: %i", p.lives);
       if (p.inventory.size()) {
 	ImGui::Text("---- Primary ----");
 	ImGui::Text("%s (%i)",
@@ -268,7 +274,12 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
 	break;
 
       case JOY_BUTTON_RB:
-	player.primingGrenade = true;
+	if (!player.respawning) {
+	  player.primingGrenade = true;
+	}
+	else {
+	  respawn(player);
+	}
 	break;
 
       case JOY_BUTTON_Y:
@@ -286,8 +297,10 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
   else {
     switch (button) {
       case JOY_BUTTON_RB:
-	player.primingGrenade = false;
-	throwGrenade(player);
+	if (player.primingGrenade) {
+	  player.primingGrenade = false;
+	  throwGrenade(player);
+	}
 	break;
       default: break;
     }
@@ -373,6 +386,33 @@ void PlayerSystem::cycleGrenade(Player& p)
   }
 }
 
+void PlayerSystem::kill(Player& p)
+{
+  if (p.alive && p.lives > 0) {
+    p.health = 0;
+    p.lives--;
+    p.alive = false;
+
+    // Respawn
+    p.respawning = true;
+    p.ghost = true;
+  }
+
+  EvdPlayerDeath d;
+  d.player = &p;
+  EventManager::Send(Event::PLAYER_DEATH, d);
+}
+
+void PlayerSystem::respawn(Player& p)
+{
+  if (p.alive) return;
+
+  p.alive = true;
+  p.respawning = false;
+  p.ghost = false;
+  p.health = Player::STARTING_HEALTH;
+}
+
 void PlayerSystem::onExplosion(const Event& e)
 {
   const auto* g = boost::any_cast<EvdGrenadeExplosion>(e.data).grenade;
@@ -393,6 +433,7 @@ void PlayerSystem::onExplosion(const Event& e)
     float dist = glm::length(diff);
 
     if (dist >= g->properties.radius) continue;
+    if (p.ghost) continue;
 
     // Damage falloff
     float damage = g->properties.damage * 
