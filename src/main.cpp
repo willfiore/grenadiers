@@ -44,14 +44,15 @@ int main() {
 
   glEnable(GL_DEPTH_TEST);
 
-  // ImGui
+  // ---- ImGui ----
   ImGui::CreateContext();
   ImGui_ImplGlfwGL3_Init(w.getWindow(), true);
-  ImGuiStyle* imguiStyle = &ImGui::GetStyle();
 
+  // ImGui Style
+  ImGuiStyle* imguiStyle = &ImGui::GetStyle();
   imguiStyle->WindowRounding = 4.f;
   imguiStyle->WindowTitleAlign = {0.5, 0.5};
-  imguiStyle->Colors[ImGuiCol_WindowBg] = {0.1, 0.1, 0.1, 0.9};
+  imguiStyle->Colors[ImGuiCol_WindowBg] = {0.1, 0.1, 0.1, 0.6};
   imguiStyle->Colors[ImGuiCol_TitleBg] = {0.3, 0.3, 0.3, 0.9};
   imguiStyle->Colors[ImGuiCol_TitleBgActive] = {0.3, 0.3, 0.3, 0.9};
   imguiStyle->Colors[ImGuiCol_Header] = {0.3, 0.3, 0.3, 0.9};
@@ -133,7 +134,6 @@ int main() {
   PowerupRenderer powerupRenderer(powerupSystem);
   TimescaleZoneRenderer timescaleZoneRenderer(timescaleSystem);
 
-
   // Main loop
   const double dt = 1.f/60.f; // logic tickrate
 
@@ -146,15 +146,12 @@ int main() {
   while (!glfwWindowShouldClose(w.getWindow())) {
 
     ImGui_ImplGlfwGL3_NewFrame();
-
     Console::render();
 
     double newTime = glfwGetTime();
     double frameTime = newTime - t;
     t = newTime;
     accumulator += frameTime;
-
-    glfwPollEvents();
 
     // Logic tick
     // WARNING: "if" rather than "while" can cause spiral of death
@@ -213,7 +210,7 @@ int main() {
     // First pass
     glBindFramebuffer(GL_FRAMEBUFFER, w.getFBO());
     glEnable(GL_DEPTH_TEST);
-    glClearColor(0.6f, 0.1f, 0.0f, 0.f);
+    glClearColor(0.2f, 0.25f, 0.6f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Camera
@@ -242,6 +239,7 @@ int main() {
     ImGui::Render();
     ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
+    glfwPollEvents();
     glfwSwapBuffers(w.getWindow());
   }
 

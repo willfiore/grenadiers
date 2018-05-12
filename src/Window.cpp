@@ -8,9 +8,12 @@
 #include "EventManager.hpp"
 #include "ResourceManager.hpp"
 
+#include "Console.hpp"
+
 void glfw_key_callback(GLFWwindow* window,
     int key, int scancode, int action, int mods)
 {
+  Console::log() << key;
 }
 
 Window::Window() :
@@ -32,6 +35,9 @@ Window::Window() :
       NULL
       );
 
+  // Callbacks
+  glfwSetKeyCallback(window, glfw_key_callback);
+
   glfwMakeContextCurrent(window);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
   glfwSwapInterval(1.0);
@@ -41,9 +47,6 @@ Window::Window() :
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  // Callbacks
-  glfwSetKeyCallback(window, glfw_key_callback);
 
   // Generate pre-post MSAA FBO
   glGenFramebuffers(1, &FBO);

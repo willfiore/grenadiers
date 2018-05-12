@@ -14,6 +14,7 @@ struct Grenade
     CLUSTER,
     INERTIA,
     TELEPORT,
+    HOMING,
     _1,
     
     // Not player ownable
@@ -27,12 +28,15 @@ struct Grenade
   static std::map<Type, std::string> typeStrings;
   static const char* getTypeString(Type);
 
+  static constexpr double SUB_LIFETIME_DELAY = 0.5;
+
   Grenade();
   Grenade(Type);
   void setProperties(Grenade::Type);
 
   Type type;
   int owner;
+  int target;
   double spawnTimestamp;
   double age;
   double localTimescale;
@@ -40,6 +44,8 @@ struct Grenade
   glm::vec2 position;
   glm::vec2 velocity;
   glm::vec2 acceleration;
+
+  bool subDetonated;
 
   bool dirty_justBounced;
   bool dirty_awaitingRemoval;
@@ -49,6 +55,7 @@ struct Grenade
   struct {
 
     double lifetime;
+
     float knockback;
     float damage;
     float radius;
@@ -61,6 +68,7 @@ struct Grenade
     bool detonateOnPlayerHit;
     bool bounceOnPlayerHit;
     bool slowBeforeDetonate;
+    bool homing;
     int numClusterFragments;
     bool spawnInertiaZone;
     bool teleportPlayerOnDetonate;

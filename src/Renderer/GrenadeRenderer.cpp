@@ -19,6 +19,8 @@ void GrenadeRenderer::draw()
   shader.use();
 
   for (auto& p : grenadeSystem.getGrenades()) {
+    if (p.dirty_awaitingRemoval) continue;
+
     glm::mat4 model = glm::mat4();
     model = glm::translate(model, glm::vec3(p.position, 0.f));
     model = glm::scale(model, glm::vec3(3.f, 3.f, 1.f));

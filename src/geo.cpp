@@ -3,6 +3,16 @@
 
 #include <iostream>
 
+float geo::sqdist(glm::vec2 a, glm::vec2 b)
+{
+  return (b.y-a.y)*(b.y-a.y) + (b.x-a.x)*(b.x-a.x);
+}
+
+float geo::sq(float x)
+{
+  return x*x;
+}
+
 bool geo::ccw(glm::vec2 a, glm::vec2 b, glm::vec2 c)
 {
   return 

@@ -48,22 +48,96 @@ void GrenadeSystem::update(double gdt)
       (timescaleSystem.getTimescaleAtPosition(g.position) - g.localTimescale);
     double dt = g.localTimescale * gdt;
 
-    g.age += gdt;
+    g.age += dt;
 
     // ------------
     // Physics
     // ------------
 
-    if (g.properties.slowBeforeDetonate &&
-	g.properties.lifetime - g.age < 0.5) {
-      double slowFactor = glm::pow(2*(g.properties.lifetime - g.age), 2);
-      if (slowFactor < 0.05) slowFactor = 0.05;
-      dt *= slowFactor;
+    // Gravity
+    g.acceleration = glm::vec2(0.f, -1000.f);
+
+    //// Homing behaviour
+
+    // 1) Assign target
+    if (g.target == -1 && g.properties.homing && g.age > 0.5f && g.velocity.y <= 10) {
+      float closestPlayerSqDist = geo::inf<float>();
+      for (const auto& p : playerSystem.getPlayers()) {
+	// Don't track player who threw the grenade
+	if (p.id == g.owner) continue;
+	// Don't track dead players
+	if (!p.alive) continue;
+
+	float currentPlayerSqDist = geo::sqdist(g.position, p.position);
+	// Don't track players too far away
+	if (currentPlayerSqDist > geo::sq(800.f)) continue;
+
+	if (currentPlayerSqDist < closestPlayerSqDist) {
+	  closestPlayerSqDist = currentPlayerSqDist;
+	  g.target = p.id;
+	}
+      }
     }
 
-    g.velocity += g.acceleration * (float)dt;
+    if (g.properties.homing && g.target != -1) {
+      // Remove acceleration from gravity
+      g.acceleration = glm::vec2();
 
-    glm::vec2 newPosition = g.position + g.velocity * (float)dt;
+      // Tend to full speed
+      float oldSpeed = glm::length(g.velocity);
+      float targetSpeed = 1500.f;
+      float newSpeed = oldSpeed + 1.4 * dt * (targetSpeed - oldSpeed);
+
+      if (g.target >= 0) {
+	const auto& p = playerSystem.getPlayer(g.target);
+	glm::vec2 targetPosition = p.getCenterPosition();
+
+	// Correct direction
+	glm::vec2 targetDirection = glm::normalize(targetPosition - g.position);
+	glm::vec2 currentDirection = glm::normalize(g.velocity);
+
+	float rotateAmount = 4.f * dt;
+
+	if (g.age < 1.f) {
+	  rotateAmount *= 2.4f;
+	}
+	float angle = glm::abs(glm::acos(glm::dot(targetDirection, currentDirection)));
+
+	if (angle < rotateAmount) {
+	  g.velocity = newSpeed * targetDirection;
+	}
+	else {
+	  float dir = geo::ccw(glm::vec2(), targetDirection, currentDirection) ?
+	    -1 : 1;
+	  if (glm::sign(g.velocity.x) != glm::sign(targetDirection.x) &&
+	      glm::abs(g.position.x - targetPosition.x) > 200.f) {
+	    dir = -glm::sign(targetDirection.x);
+	  }
+	  g.velocity = newSpeed * glm::normalize(
+	      glm::rotate(g.velocity, rotateAmount*dir));
+	}
+
+	// Stop tracking player once within range, or out of range
+	float sqDist = geo::sqdist(g.position, targetPosition);
+	if (sqDist < geo::sq(100.f)) {
+	  g.target = -2;
+	}
+      }
+      else {
+	g.velocity = newSpeed * glm::normalize(g.velocity);
+      }
+    }
+
+    // Slow before detonate
+    float slowFactor = 1.0;
+    if (g.properties.slowBeforeDetonate &&
+	g.properties.lifetime - g.age < 0.5) {
+      slowFactor = glm::pow(2*(g.properties.lifetime - g.age), 2);
+      if (slowFactor < 0.05) slowFactor = 0.05;
+    }
+
+    g.velocity += g.acceleration * (float)dt * slowFactor;
+    glm::vec2 newPosition = g.position + g.velocity * (float)dt * slowFactor;
 
     // Bounce on terrain
     // ------------------
@@ -128,17 +202,15 @@ void GrenadeSystem::update(double gdt)
 
     g.position = newPosition;
 
-    // -------------
-    // Timer explode
-    // -------------
     if (g.age >= g.properties.lifetime) {
       g.properties.detonateOnDeath ?
 	explodeGrenade(g) : fizzleGrenade(g);
     }
+
   }
 }
 
-void GrenadeSystem::grenadeHitGround(Grenade& g, glm::vec2 pos)
+void GrenadeSystem::grenadeHitGround(Grenade& g, glm::vec2)
 {
   if (g.properties.detonateOnLand) {
     explodeGrenade(g);
@@ -206,13 +278,13 @@ void GrenadeSystem::onPlayerDetonateGrenade(const Event& e)
 	g.properties.manualDetonate &&
 	(oldestGrenade == nullptr ||
 	 g.spawnTimestamp < oldestGrenade->spawnTimestamp)) {
+
       oldestGrenade = &g;
-      continue;
     }
   }
 
   if (oldestGrenade != nullptr) {
-    explodeGrenade(*oldestGrenade);
+      explodeGrenade(*oldestGrenade);
   }
 }
 

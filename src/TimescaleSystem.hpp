@@ -10,6 +10,7 @@ class TimescaleSystem
 public:
   struct Zone {
     glm::vec2 position;
+    double age;
     float radius;
     double timescale;
   };

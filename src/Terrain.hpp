@@ -19,7 +19,7 @@ class Terrain {
 public:
   Terrain();
 
-  static constexpr float PRECISION = 45.f;
+  static constexpr float PRECISION = 50.f;
   static constexpr float MAX_MODIFIERS = 4.f;
 
   float getMaxDepth() const { return maxDepth; }

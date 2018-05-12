@@ -27,6 +27,7 @@ PlayerSystem::PlayerSystem(
   controllers(c),
   timescaleSystem(ts)
 {
+  // Add player per controller
   for (const auto& c : controllers) {
     players.emplace_back(Player());
     Player& player = players.back();
@@ -35,9 +36,9 @@ PlayerSystem::PlayerSystem(
     player.position.x = 2000.f;
     player.controllerID = c.first;
 
-    player.giveGrenade(Grenade::Type::CLUSTER, 15);
-    player.giveGrenade(Grenade::Type::INERTIA, 2);
-    player.giveGrenade(Grenade::Type::TELEPORT, 3);
+    player.giveGrenade(Grenade::Type::INERTIA, 1000);
+    player.giveGrenade(Grenade::Type::STANDARD, 1000);
+    player.giveGrenade(Grenade::Type::HOMING, 1000);
   }
 
   // Create dummy player
@@ -53,6 +54,11 @@ PlayerSystem::PlayerSystem(
 
   EventManager::Register(Event::POWERUP_PICKUP,
       std::bind(&PlayerSystem::onPowerupPickup, this, _1));
+}
+
+const Player& PlayerSystem::getPlayer(int id) const
+{
+  return players[id];
 }
 
 void PlayerSystem::update(double t, double gdt)
@@ -224,7 +230,10 @@ void PlayerSystem::update(double t, double gdt)
 
     // Health
     if (p.health <= 0.f) {
-      kill(p);
+      if (!p.undying)
+	kill(p);
+      else
+	p.health = Player::STARTING_HEALTH;
     }
   }
 
@@ -245,9 +254,9 @@ void PlayerSystem::update(double t, double gdt)
 	    p.inventory[p.primaryGrenadeSlot].ammo);
 	ImGui::Text("---- Secondary (%i) ----", p.combinationEnabled);
 	if (p.combinationEnabled) {
-	ImGui::Text("%s (%i)",
-	    Grenade::getTypeString(p.inventory[p.secondaryGrenadeSlot].type),
-	    p.inventory[p.secondaryGrenadeSlot].ammo);
+	  ImGui::Text("%s (%i)",
+	      Grenade::getTypeString(p.inventory[p.secondaryGrenadeSlot].type),
+	      p.inventory[p.secondaryGrenadeSlot].ammo);
 	} else {
 	  ImGui::Text("");
 	}
@@ -266,43 +275,46 @@ void PlayerSystem::processInput(int controllerID, int button, bool action)
 
   Player& player = *it;
 
-  // Press
-  if (action) {
-    switch (button) {
-      case JOY_BUTTON_A:
-	jump(player);
-	break;
-
-      case JOY_BUTTON_RB:
-	if (!player.respawning) {
-	  player.primingGrenade = true;
-	}
-	else {
-	  respawn(player);
-	}
-	break;
-
-      case JOY_BUTTON_Y:
-	cycleGrenade(player);
-	break;
-
-      case JOY_BUTTON_LB:
-	detonateGrenade(player);
-
-      default: break;
+  if (player.respawning) {
+    if (action && button == JOY_BUTTON_A) {
+      respawn(player);
     }
   }
-
-  // Release
   else {
-    switch (button) {
-      case JOY_BUTTON_RB:
-	if (player.primingGrenade) {
-	  player.primingGrenade = false;
-	  throwGrenade(player);
-	}
-	break;
-      default: break;
+    // Press
+    if (action) {
+      switch (button) {
+
+	case JOY_BUTTON_A:
+	  jump(player);
+	  break;
+
+	case JOY_BUTTON_RB:
+	  player.primingGrenade = true;
+	  break;
+
+	case JOY_BUTTON_Y:
+	  cycleGrenade(player);
+	  break;
+
+	case JOY_BUTTON_LB:
+	  detonateGrenade(player);
+
+	default: break;
+      }
+    }
+
+    // Release
+    else {
+      switch (button) {
+	case JOY_BUTTON_RB:
+	  if (player.primingGrenade) {
+	    player.primingGrenade = false;
+	    throwGrenade(player);
+	  }
+	  break;
+	default: break;
+      }
     }
   }
 }
@@ -429,15 +441,19 @@ void PlayerSystem::onExplosion(const Event& e)
       if (p.velocity.y < 0.f) p.velocity.y = 0.f;
     }
 
-    glm::vec2 diff = p.position - g->position;
+    glm::vec2 diff = p.getCenterPosition() - g->position;
     float dist = glm::length(diff);
 
     if (dist >= g->properties.radius) continue;
     if (p.ghost) continue;
 
     // Damage falloff
-    float damage = g->properties.damage * 
-      (1 - glm::pow((dist / g->properties.radius), 0.74f));
+    float damage = g->properties.damage;
+
+    if (dist > 42.f) {
+      damage = g->properties.damage * 
+	(1 - glm::pow((dist / g->properties.radius), 0.74f));
+    }
 
     if (damage < 0.1*g->properties.damage)
       damage = 0.1 * g->properties.damage;
@@ -457,10 +473,9 @@ void PlayerSystem::onExplosion(const Event& e)
     launchVelocity.y = g->properties.knockback *
       glm::pow( (g->properties.radius-dist)/g->properties.radius, 0.5);
 
-    // If we are very close in x, launch more upwards
+    // If we are very close in x, dont launch much in x
     if (glm::abs(diff.x) < 1.5f * Player::SIZE) {
-      launchVelocity.x *= 0.8f;
-      launchVelocity.y *= 1.5f;
+      launchVelocity.x *= 0.3f;
     }
 
     p.velocity += launchVelocity;

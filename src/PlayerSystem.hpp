@@ -31,6 +31,7 @@ public:
   void respawn(Player&);
 
   const std::vector<Player>& getPlayers() const { return players; };
+  const Player& getPlayer(int id) const;
 
 private:
   std::vector<Player> players;

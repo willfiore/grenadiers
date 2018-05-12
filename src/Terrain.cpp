@@ -20,7 +20,7 @@ Terrain::Terrain() :
   maxWidth(5000.f)
 {
   for (float i = 0.f; i < maxWidth; i += PRECISION) {
-    basePoints.push_back({i, 0.f});
+    basePoints.push_back({i, -Random::randomFloat(0.f, 10.f)});
   }
   maxWidth = basePoints.back().x;
   points = basePoints;

@@ -34,6 +34,7 @@ Player::Player()
   alive = true;
   respawning = false;
   ghost = false;
+  undying = true;
   airborne = false;
   jumpAvailable = true;
   outOfControl = false;

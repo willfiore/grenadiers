@@ -74,6 +74,7 @@ struct Player {
   bool alive;
   bool respawning;
   bool ghost;
+  bool undying;
   bool airborne;
   bool jumpAvailable;
   bool outOfControl;

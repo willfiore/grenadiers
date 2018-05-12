@@ -22,13 +22,24 @@ void TimescaleSystem::update(double t, double dt)
 
   // Min timescale
   if (globalTimescale < 0.01f) globalTimescale = 0.01f;
+
+  for (auto& z : zones) {
+    z.age += dt * globalTimescale;
+  }
+
+  // Remove old zones
+  zones.erase(std::remove_if(zones.begin(), zones.end(),
+      [](const Zone& z) -> bool {
+      return z.age > 5.0;
+      }), zones.end());
 }
 
 double TimescaleSystem::getTimescaleAtPosition(glm::vec2 p) const
 {
+  // Pick slowest timescale
   double timescale = 1.f;
   for (const auto& z : zones) {
-    if (glm::distance(p, z.position) < z.radius) {
+    if (geo::sqdist(p, z.position) < geo::sq(z.radius)) {
       timescale = glm::min(timescale, z.timescale);
     }
   }
@@ -49,6 +60,7 @@ void TimescaleSystem::onExplosion(const Event& e)
   if (g->properties.spawnInertiaZone) {
     Zone& z = addZone();
     z.position = g->position;
+    z.age = 0.0;
     z.radius = g->properties.radius;
     z.timescale = 0.25f;
   }
