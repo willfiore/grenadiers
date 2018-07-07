@@ -17,7 +17,7 @@
 
 Terrain::Terrain() :
   maxDepth(-400.f),
-  maxWidth(5000.f)
+  maxWidth(10000.f)
 {
   for (float i = 0.f; i < maxWidth; i += PRECISION) {
     basePoints.push_back({i, -Random::randomFloat(0.f, 10.f)});
@@ -187,7 +187,7 @@ void Terrain::onExplosion(const Event& e)
 
   if (g->properties.radius == 0.f) return;
 
-  deform(g->position, g->properties.radius, 1.f);
+  deform(g->position, g->properties.radius, g->properties.terrainDamageModifier);
 
   float wobbleAmount = 15.f * g->properties.terrainWobbleModifier;
   if ((g->position.y - getHeight(g->position.x)) / g->properties.radius < 1.f) {

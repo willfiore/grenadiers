@@ -30,6 +30,7 @@
 #include "PowerupSystem.hpp"
 
 #include "Renderer/BaseRenderer.hpp"
+#include "Renderer/TextRenderer.hpp"
 #include "Renderer/PlayerRenderer.hpp"
 #include "Renderer/GrenadeRenderer.hpp"
 #include "Renderer/TerrainRenderer.hpp"
@@ -45,17 +46,17 @@ int main() {
   glEnable(GL_DEPTH_TEST);
 
   // ---- ImGui ----
-  ImGui::CreateContext();
-  ImGui_ImplGlfwGL3_Init(w.getWindow(), true);
+  // ImGui::CreateContext();
+  // ImGui_ImplGlfwGL3_Init(w.getWindow(), true);
 
   // ImGui Style
-  ImGuiStyle* imguiStyle = &ImGui::GetStyle();
-  imguiStyle->WindowRounding = 4.f;
-  imguiStyle->WindowTitleAlign = {0.5, 0.5};
-  imguiStyle->Colors[ImGuiCol_WindowBg] = {0.1, 0.1, 0.1, 0.6};
-  imguiStyle->Colors[ImGuiCol_TitleBg] = {0.3, 0.3, 0.3, 0.9};
-  imguiStyle->Colors[ImGuiCol_TitleBgActive] = {0.3, 0.3, 0.3, 0.9};
-  imguiStyle->Colors[ImGuiCol_Header] = {0.3, 0.3, 0.3, 0.9};
+  // ImGuiStyle* imguiStyle = &ImGui::GetStyle();
+  // imguiStyle->WindowRounding = 4.f;
+  // imguiStyle->WindowTitleAlign = {0.5, 0.5};
+  // imguiStyle->Colors[ImGuiCol_WindowBg] = {0.1, 0.1, 0.1, 0.6};
+  // imguiStyle->Colors[ImGuiCol_TitleBg] = {0.3, 0.3, 0.3, 0.9};
+  // imguiStyle->Colors[ImGuiCol_TitleBgActive] = {0.3, 0.3, 0.3, 0.9};
+  // imguiStyle->Colors[ImGuiCol_Header] = {0.3, 0.3, 0.3, 0.9};
 
   // Initialize space in UBO
   unsigned int UBO;
@@ -128,6 +129,7 @@ int main() {
   PowerupSystem powerupSystem(terrain, playerSystem);
   CameraSystem cameraSystem(&w, playerSystem.getPlayers());
 
+  TextRenderer textRenderer;
   PlayerRenderer playerRenderer(playerSystem);
   TerrainRenderer terrainRenderer(terrain);
   GrenadeRenderer grenadeRenderer(grenadeSystem);
@@ -145,8 +147,8 @@ int main() {
 
   while (!glfwWindowShouldClose(w.getWindow())) {
 
-    ImGui_ImplGlfwGL3_NewFrame();
-    Console::render();
+    // ImGui_ImplGlfwGL3_NewFrame();
+    // Console::render();
 
     double newTime = glfwGetTime();
     double frameTime = newTime - t;
@@ -236,16 +238,16 @@ int main() {
     // Final pass to screen
     w.render();
 
-    ImGui::Render();
-    ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+    // ImGui::Render();
+    // ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
     glfwPollEvents();
     glfwSwapBuffers(w.getWindow());
   }
 
   // Cleanup
-  ImGui_ImplGlfwGL3_Shutdown();
-  ImGui::DestroyContext();
+  // ImGui_ImplGlfwGL3_Shutdown();
+  // ImGui::DestroyContext();
   glfwTerminate();
 
   return 0;

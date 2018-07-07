@@ -74,7 +74,7 @@ void Grenade::setProperties(Grenade::Type type)
     case Type::STANDARD:
       properties.knockback = 400.f;
       properties.radius = 160.f;
-      properties.damage = 100.f;
+      properties.damage = 50.f;
       break;
     case Type::CLUSTER:
       properties.numClusterFragments = Random::randomInt(24, 30);
@@ -83,7 +83,7 @@ void Grenade::setProperties(Grenade::Type type)
     case Type::CLUSTER_FRAGMENT:
       properties.lifetime = geo::inf<double>();
       properties.radius = 50.f;
-      properties.damage = 20.f;
+      properties.damage = 3.f;
       properties.manualDetonate = false;
       properties.detonateOnLand = true;
       properties.terrainDamageModifier = 0.2f;
@@ -92,9 +92,9 @@ void Grenade::setProperties(Grenade::Type type)
       dirty_justBounced = true;
       break;
     case Type::INERTIA:
-      properties.radius = 200.f;
+      properties.radius = 120.f;
       properties.terrainDamageModifier = 0.f;
-      properties.terrainWobbleModifier = 0.f;
+      properties.terrainWobbleModifier = 0.2f;
       properties.slowBeforeDetonate = true;
       properties.spawnInertiaZone = true;
       break;
@@ -115,7 +115,6 @@ void Grenade::setProperties(Grenade::Type type)
       properties.knockback = 1000.f;
       properties.detonateOnDeath = false;
       break;
-
 
     ///////////////
     // Combi

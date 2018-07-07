@@ -14,7 +14,7 @@
 
 TerrainRenderer::TerrainRenderer(const Terrain& t) :
   terrain(t),
-  depth(1000.f)
+  depth(10000.f)
 {
   glGenBuffers(1, &VBO);
   glGenBuffers(1, &EBO);
@@ -60,7 +60,7 @@ void TerrainRenderer::draw()
   for (size_t i = 0; i < points.size(); ++i) {
     const glm::vec2& p1 = points[i];
     verts.push_back({p1.x, p1.y, 0.f});
-    verts.push_back({p1.x, -1000.f, 0.f}); 
+    verts.push_back({p1.x, -depth, 0.f}); 
   }
 
   glBindVertexArray(VAO);

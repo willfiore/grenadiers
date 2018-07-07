@@ -24,27 +24,43 @@ void TimescaleSystem::update(double t, double dt)
   if (globalTimescale < 0.01f) globalTimescale = 0.01f;
 
   for (auto& z : zones) {
+    if (z.lifetime - z.age < 0.4) {
+      double alpha = (z.age - z.lifetime) / 0.4 + 1;
+      z.timescale = z.initialTimescale + alpha * (1.0 - z.initialTimescale);
+    }
+
     z.age += dt * globalTimescale;
   }
 
   // Remove old zones
   zones.erase(std::remove_if(zones.begin(), zones.end(),
       [](const Zone& z) -> bool {
-      return z.age > 5.0;
+      return z.age > z.lifetime;
       }), zones.end());
 }
 
 double TimescaleSystem::getTimescaleAtPosition(glm::vec2 p) const
 {
   // Pick slowest timescale
-  double timescale = 1.f;
+  bool insideZone = false;
+  double timescale = geo::inf<double>();
   for (const auto& z : zones) {
-    if (geo::sqdist(p, z.position) < geo::sq(z.radius)) {
-      timescale = glm::min(timescale, z.timescale);
+    float sqdist = geo::sqdist(p, z.position);
+    if (sqdist < geo::sq(z.radius)) {
+      insideZone = true;
+
+      // Small outer edge buffer
+      double zoneTimescale = z.timescale;
+      float bufferSize = 10.f;
+      if (sqdist > geo::sq(z.radius-bufferSize)) {
+	double alpha = (z.radius - sqrt(sqdist)) / bufferSize;
+	zoneTimescale = 1.0 + alpha * (zoneTimescale - 1.0);
+      }
+      timescale = glm::min(timescale, zoneTimescale);
     }
   }
 
-  return timescale;
+  return insideZone ? timescale : 1.0;
 }
 
 TimescaleSystem::Zone& TimescaleSystem::addZone()
@@ -60,8 +76,10 @@ void TimescaleSystem::onExplosion(const Event& e)
   if (g->properties.spawnInertiaZone) {
     Zone& z = addZone();
     z.position = g->position;
+    z.lifetime = 5.0;
     z.age = 0.0;
     z.radius = g->properties.radius;
-    z.timescale = 0.25f;
+    z.initialTimescale = 0.05f;
+    z.timescale = z.initialTimescale;
   }
 }

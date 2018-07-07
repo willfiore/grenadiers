@@ -33,11 +33,12 @@ PlayerSystem::PlayerSystem(
     Player& player = players.back();
 
     player.id = players.size()-1;
-    player.position.x = 2000.f;
+    player.position.x = terrain.getMaxWidth() / 2;
     player.controllerID = c.first;
 
     player.giveGrenade(Grenade::Type::INERTIA, 1000);
     player.giveGrenade(Grenade::Type::STANDARD, 1000);
+    player.giveGrenade(Grenade::Type::CLUSTER, 1000);
     player.giveGrenade(Grenade::Type::HOMING, 1000);
   }
 
@@ -46,7 +47,7 @@ PlayerSystem::PlayerSystem(
   Player& player = players.back();
 
   player.id = players.size()-1;
-  player.position.x = 2200.f;
+  player.position.x = terrain.getMaxWidth() / 2 - 100.f;
   player.controllerID = -1;
 
   EventManager::Register(Event::EXPLOSION,
@@ -64,11 +65,9 @@ const Player& PlayerSystem::getPlayer(int id) const
 void PlayerSystem::update(double t, double gdt)
 {
   for (auto& p : players) {
-    double newTimescale = timescaleSystem.getTimescaleAtPosition(p.position);
-    double inertia = newTimescale < p.localTimescale ? 0.3 : 0.1;
-    p.localTimescale += inertia *
-      (timescaleSystem.getTimescaleAtPosition(p.position) - p.localTimescale);
-    double dt = p.localTimescale * gdt;
+    double newTimescale =
+      timescaleSystem.getTimescaleAtPosition(p.getCenterPosition());
+    double dt = newTimescale * gdt;
 
     std::vector<float> axes(6, 0.0f);
 
@@ -197,6 +196,11 @@ void PlayerSystem::update(double t, double gdt)
 	p.dirty_justLeftGround = false;
       }
 
+      // Double super extreme failsafe
+      if (newPosition.y < terrain.getHeight(newPosition.x)) {
+	newPosition.y = terrain.getHeight(newPosition.x);
+      }
+
       p.position = newPosition;
 
       if (p.respawning) {
@@ -237,33 +241,33 @@ void PlayerSystem::update(double t, double gdt)
     }
   }
 
-  ImGui::Begin("Players", NULL, ImGuiWindowFlags_NoCollapse);
-  for (auto& p : players) {
-    std::stringstream header_label;
-    header_label << "Player " << p.id; 
+  // ImGui::Begin("Players", NULL, ImGuiWindowFlags_NoCollapse);
+  // for (auto& p : players) {
+  //   std::stringstream header_label;
+  //   header_label << "Player " << p.id; 
 
-    int flags = ImGuiTreeNodeFlags_DefaultOpen;
+  //   int flags = ImGuiTreeNodeFlags_DefaultOpen;
 
-    if(ImGui::CollapsingHeader(header_label.str().c_str(), flags)) {
-      ImGui::Text("Health: %2.f", p.health);
-      ImGui::Text("Lives: %i", p.lives);
-      if (p.inventory.size()) {
-	ImGui::Text("---- Primary ----");
-	ImGui::Text("%s (%i)",
-	    Grenade::getTypeString(p.inventory[p.primaryGrenadeSlot].type),
-	    p.inventory[p.primaryGrenadeSlot].ammo);
-	ImGui::Text("---- Secondary (%i) ----", p.combinationEnabled);
-	if (p.combinationEnabled) {
-	  ImGui::Text("%s (%i)",
-	      Grenade::getTypeString(p.inventory[p.secondaryGrenadeSlot].type),
-	      p.inventory[p.secondaryGrenadeSlot].ammo);
-	} else {
-	  ImGui::Text("");
-	}
-      }
-    }
-  }
-  ImGui::End();
+  //   if(ImGui::CollapsingHeader(header_label.str().c_str(), flags)) {
+  //     ImGui::Text("Health: %2.f", p.health);
+  //     ImGui::Text("Lives: %i", p.lives);
+  //     if (p.inventory.size()) {
+  //       ImGui::Text("---- Primary ----");
+  //       ImGui::Text("%s (%i)",
+  //           Grenade::getTypeString(p.inventory[p.primaryGrenadeSlot].type),
+  //           p.inventory[p.primaryGrenadeSlot].ammo);
+  //       ImGui::Text("---- Secondary (%i) ----", p.combinationEnabled);
+  //       if (p.combinationEnabled) {
+  //         ImGui::Text("%s (%i)",
+  //             Grenade::getTypeString(p.inventory[p.secondaryGrenadeSlot].type),
+  //             p.inventory[p.secondaryGrenadeSlot].ammo);
+  //       } else {
+  //         ImGui::Text("");
+  //       }
+  //     }
+  //   }
+  // }
+  // ImGui::End();
 }
 
 void PlayerSystem::processInput(int controllerID, int button, bool action)

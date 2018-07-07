@@ -1,5 +1,6 @@
 #include "GrenadeSystem.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/trigonometric.hpp>
 #include <glm/gtc/constants.hpp>
@@ -43,10 +44,7 @@ void GrenadeSystem::update(double gdt)
 
   for (auto& g : grenades) {
     double newTimescale = timescaleSystem.getTimescaleAtPosition(g.position);
-    double inertia = newTimescale < g.localTimescale ? 0.3 : 0.03;
-    g.localTimescale += inertia * 
-      (timescaleSystem.getTimescaleAtPosition(g.position) - g.localTimescale);
-    double dt = g.localTimescale * gdt;
+    double dt = newTimescale * gdt;
 
     g.age += dt;
 
@@ -96,12 +94,10 @@ void GrenadeSystem::update(double gdt)
 	glm::vec2 targetDirection = glm::normalize(targetPosition - g.position);
 	glm::vec2 currentDirection = glm::normalize(g.velocity);
 
-	float rotateAmount = 4.f * dt;
+	float rotateAmount = 12.f * dt;
 
-	if (g.age < 1.f) {
-	  rotateAmount *= 2.4f;
-	}
-	float angle = glm::abs(glm::acos(glm::dot(targetDirection, currentDirection)));
+	float angle =
+	  glm::abs(glm::acos(glm::dot(targetDirection, currentDirection)));
 
 	if (angle < rotateAmount) {
 	  g.velocity = newSpeed * targetDirection;

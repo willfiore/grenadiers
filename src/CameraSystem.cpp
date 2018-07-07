@@ -57,14 +57,14 @@ void CameraSystem::update(double t, double dt)
 
   float rangeModifier = 0.5f * (maxRange - 200.f);
   if (rangeModifier < 0.f) rangeModifier = 0.f;
-  if (rangeModifier > 400.f) rangeModifier = 400.f;
+  // if (rangeModifier > 700.f) rangeModifier = 700.f;
 
   targetPos.z += rangeModifier;
 
   position = position + (targetPos - position) * (float)dt * 4.f;
 
   // Camera shake
-  float shakeAmount = shakeAmplitude * glm::exp(6.f*(shakeStartTimestamp-t));
+  float shakeAmount = shakeAmplitude * glm::exp(-6.f*(t-shakeStartTimestamp));
   position.x += Random::randomFloat(-shakeAmount, shakeAmount);
   position.y += Random::randomFloat(-shakeAmount, shakeAmount);
 
